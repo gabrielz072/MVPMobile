@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { trilhas } from './data/trilhas';
 import { router } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { trilhas } from './data/trilhas';
 
 export default function TrilhasScreen() {
   return (
@@ -18,7 +18,11 @@ export default function TrilhasScreen() {
         <Pressable
         key={trilha.id}
         style={styles.card}
-        onPress={() => router.push(`/trilha?id=${trilha.id}`)}
+        onPress={() => {
+          if (trilha.id === '1') router.push('/pedra-do-sino');
+          if (trilha.id === '2') router.push('/escalavrado');
+          if (trilha.id === '3') router.push('/pedra-do-acu');
+        }}
 >
           
           <Text style={styles.cardTitle}>

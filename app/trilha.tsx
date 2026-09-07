@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, Pressable } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
-import { trilhas } from './data/trilhas';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { trilhas } from './data/trilhas';
 
 export default function TrilhaScreen() {
-    
+  const { id } = useLocalSearchParams();
   const [favoritado, setFavoritado] = useState(false);
 
 useEffect(() => {
@@ -21,8 +21,6 @@ useEffect(() => {
 
   carregarFavorito();
 }, [id]);
-
-  const { id } = useLocalSearchParams();
 
   const trilha = trilhas.find((item) => item.id === id);
 
