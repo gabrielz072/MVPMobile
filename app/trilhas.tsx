@@ -1,3 +1,4 @@
+import { UserAccountBar } from '@/components/UserAccountBar';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { trilhas } from './data/trilhas';
@@ -5,6 +6,8 @@ import { trilhas } from './data/trilhas';
 export default function TrilhasScreen() {
   return (
     <View style={styles.container}> 
+
+      <UserAccountBar />
 
       <Text style={styles.title}>
         🥾 Trilhas

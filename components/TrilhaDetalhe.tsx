@@ -3,6 +3,8 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { UserAccountBar } from '@/components/UserAccountBar';
+
 type TrilhaDetalheProps = {
   id: string;
   nome: string;
@@ -49,6 +51,7 @@ export function TrilhaDetalhe({
 
   return (
     <ScrollView style={styles.container}>
+      <UserAccountBar />
       <Pressable style={styles.backButton} onPress={() => router.back()}>
         <Text style={styles.backText}>← Voltar</Text>
       </Pressable>

@@ -14,6 +14,7 @@ export type UserRole = 'admin' | 'user';
 
 type AuthContextValue = {
   user: User | null;
+  userName: string | null;
   role: UserRole | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -25,6 +26,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<User | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -33,13 +35,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setUser(nextUser);
 
       if (!nextUser) {
+        setUserName(null);
         setRole(null);
         setLoading(false);
         return;
       }
 
       const profile = await getDoc(doc(db, 'users', nextUser.uid));
-      setRole(profile.data()?.role === 'admin' ? 'admin' : 'user');
+      const profileData = profile.data();
+      setUserName(profileData?.name || nextUser.email || null);
+      setRole(profileData?.role === 'admin' ? 'admin' : 'user');
       setLoading(false);
     });
   }, []);
@@ -59,7 +64,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, role, loading, login, register, logout: () => signOut(auth) }}>
+    <AuthContext.Provider value={{ user, userName, role, loading, login, register, logout: () => signOut(auth) }}>
       {children}
     </AuthContext.Provider>
   );

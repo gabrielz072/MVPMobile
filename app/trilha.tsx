@@ -1,3 +1,4 @@
+import { UserAccountBar } from '@/components/UserAccountBar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -27,6 +28,7 @@ useEffect(() => {
   if (!trilha) {
     return (
       <View style={styles.container}>
+        <UserAccountBar />
         <Text style={styles.title}>
           Trilha não encontrada
         </Text>
@@ -36,6 +38,8 @@ useEffect(() => {
 
 return (
   <ScrollView style={styles.container}>
+
+    <UserAccountBar />
 
     <Pressable
       style={styles.backButton}

@@ -1,9 +1,12 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { UserAccountBar } from '@/components/UserAccountBar';
+
 export default function HomeScreen() {
   return (
     <View style={styles.container}>
+      <UserAccountBar />
 
       <Text style={styles.title}>
         Circuito Terê Verde 🌿
@@ -72,4 +75,5 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: 'bold',
   },
+
 });

@@ -3,6 +3,7 @@ import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { UserAccountBar } from '@/components/UserAccountBar';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 
@@ -74,6 +75,7 @@ export default function EventosScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <UserAccountBar />
       <Pressable style={styles.backButton} onPress={() => router.back()}>
         <Text style={styles.backText}>← Voltar</Text>
       </Pressable>

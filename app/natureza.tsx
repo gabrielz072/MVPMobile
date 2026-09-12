@@ -1,9 +1,11 @@
+import { UserAccountBar } from '@/components/UserAccountBar';
 import { router } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function NaturezaScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <UserAccountBar />
       <Pressable style={styles.backButton} onPress={() => router.back()}>
         <Text style={styles.backText}>← Voltar</Text>
       </Pressable>

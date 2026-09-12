@@ -1,10 +1,13 @@
 import { CategoryCard } from '@/components/CategoryCard';
+import { UserAccountBar } from '@/components/UserAccountBar';
 import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 export default function ExploreScreen() {
   return (
     <View style={styles.container}>
+
+  <UserAccountBar />
 
   <Text style={styles.title}>
     Onde ir? 🧭
