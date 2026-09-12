@@ -1,9 +1,11 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import { arrayRemove, arrayUnion, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { UserAccountBar } from '@/components/UserAccountBar';
+import { useAuth } from '@/contexts/AuthContext';
+import { db } from '@/lib/firebase';
 
 type TrilhaDetalheProps = {
   id: string;
@@ -22,31 +24,37 @@ export function TrilhaDetalhe({
   dificuldade,
   duracao,
 }: TrilhaDetalheProps) {
+  const { user } = useAuth();
   const [favoritado, setFavoritado] = useState(false);
 
   useEffect(() => {
     async function carregarFavorito() {
-      const favoritosSalvos = await AsyncStorage.getItem('favoritos');
-
-      if (favoritosSalvos) {
-        const favoritos: string[] = JSON.parse(favoritosSalvos);
-        setFavoritado(favoritos.includes(id));
+      if (!user) {
+        setFavoritado(false);
+        return;
       }
+
+      const perfil = await getDoc(doc(db, 'users', user.uid));
+      const favoritos = perfil.data()?.favoritos;
+      setFavoritado(Array.isArray(favoritos) && favoritos.includes(id));
     }
 
     carregarFavorito();
-  }, [id]);
+  }, [id, user]);
 
   async function alternarFavorito() {
-    const favoritosSalvos = await AsyncStorage.getItem('favoritos');
-    let favoritos: string[] = favoritosSalvos ? JSON.parse(favoritosSalvos) : [];
+    if (!user) {
+      Alert.alert('Faça login', 'Entre na sua conta para salvar trilhas favoritas.');
+      router.push('/login');
+      return;
+    }
 
-    favoritos = favoritado
-      ? favoritos.filter((favoritoId) => favoritoId !== id)
-      : [...favoritos, id];
+    const perfilRef = doc(db, 'users', user.uid);
 
-    await AsyncStorage.setItem('favoritos', JSON.stringify(favoritos));
-    setFavoritado(!favoritado);
+    await updateDoc(perfilRef, {
+      favoritos: favoritado ? arrayRemove(id) : arrayUnion(id),
+    });
+    setFavoritado((atual) => !atual);
   }
 
   return (
