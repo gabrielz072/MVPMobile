@@ -1,25 +1,33 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  StyleSheet,
-  Alert,
+    Alert,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from 'react-native';
-import { router } from 'expo-router';
+
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const { login } = useAuth();
 
-  function fazerLogin() {
+  async function fazerLogin() {
     if (!email || !senha) {
       Alert.alert('Atenção', 'Preencha todos os campos.');
       return;
     }
 
-    Alert.alert('Login', 'Login preenchido com sucesso!');
+    try {
+      await login(email, senha);
+      router.replace('/');
+    } catch {
+      Alert.alert('Não foi possível entrar', 'Confira o e-mail e a senha.');
+    }
   }
 
   return (

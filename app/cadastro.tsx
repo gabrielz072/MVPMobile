@@ -1,21 +1,24 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
+  Alert,
   Pressable,
   StyleSheet,
-  Alert,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
-import { router } from 'expo-router';
+
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function CadastroScreen() {
   const [nome, setNome] = useState('');
   const [sobrenome, setSobrenome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const { register } = useAuth();
 
-  function cadastrar() {
+  async function cadastrar() {
     if (!nome || !sobrenome || !email || !senha) {
       Alert.alert('Atenção', 'Preencha todos os campos.');
       return;
@@ -29,10 +32,13 @@ export default function CadastroScreen() {
       return;
     }
 
-    Alert.alert(
-      'Cadastro',
-      'Cadastro preenchido com sucesso!'
-    );
+    try {
+      await register(`${nome} ${sobrenome}`, email, senha);
+      Alert.alert('Cadastro', 'Conta criada com sucesso.');
+      router.replace('/');
+    } catch {
+      Alert.alert('Não foi possível cadastrar', 'Esse e-mail pode já estar em uso.');
+    }
   }
 
   return (
