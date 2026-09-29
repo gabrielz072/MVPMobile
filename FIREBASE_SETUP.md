@@ -18,7 +18,7 @@ A aplicacao ja esta configurada para o projeto Firebase `mvpmobile` informado.
 ```json
 {
   "name": "Nome do administrador",
-  "email": "admin@exemplo.com",
+  "email": "admin@email.com",
   "role": "admin"
 }
 ```

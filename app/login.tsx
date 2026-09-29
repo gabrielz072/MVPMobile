@@ -1,12 +1,12 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-    Alert,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,19 +14,40 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [entrando, setEntrando] = useState(false);
   const { login } = useAuth();
 
   async function fazerLogin() {
-    if (!email || !senha) {
+    if (!email.trim() || !senha) {
       Alert.alert('Atenção', 'Preencha todos os campos.');
       return;
     }
 
+    setEntrando(true);
     try {
       await login(email, senha);
       router.replace('/');
-    } catch {
-      Alert.alert('Não foi possível entrar', 'Confira o e-mail e a senha.');
+    } catch (error: unknown) {
+      const code =
+        typeof error === 'object' && error !== null && 'code' in error
+          ? String(error.code)
+          : '';
+      const mensagens: Record<string, string> = {
+        'auth/invalid-credential': 'E-mail ou senha incorretos.',
+        'auth/wrong-password': 'E-mail ou senha incorretos.',
+        'auth/user-not-found': 'Não existe uma conta com esse e-mail.',
+        'auth/invalid-email': 'Digite um endereço de e-mail válido.',
+        'auth/too-many-requests': 'Muitas tentativas. Aguarde e tente novamente.',
+        'auth/network-request-failed': 'Falha de conexão. Verifique sua internet.',
+        'auth/operation-not-allowed':
+          'O login por e-mail e senha não está habilitado no Firebase.',
+      };
+      Alert.alert(
+        'Não foi possível entrar',
+        mensagens[code] ?? 'Ocorreu um erro inesperado. Tente novamente.',
+      );
+    } finally {
+      setEntrando(false);
     }
   }
 
@@ -67,11 +88,12 @@ export default function LoginScreen() {
       />
 
       <Pressable
-        style={styles.button}
+        style={[styles.button, entrando && styles.buttonDisabled]}
         onPress={fazerLogin}
+        disabled={entrando}
       >
         <Text style={styles.buttonText}>
-          Entrar
+          {entrando ? 'Entrando...' : 'Entrar'}
         </Text>
       </Pressable>
 
@@ -132,6 +154,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
     marginBottom: 20,
+  },
+
+  buttonDisabled: {
+    opacity: 0.65,
   },
 
   buttonText: {
