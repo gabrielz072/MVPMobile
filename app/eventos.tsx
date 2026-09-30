@@ -13,26 +13,115 @@ const imagensATM = [
   'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee',
 ];
 
+type BlocoEvento = {
+  id: string;
+  type: 'text' | 'image';
+  title?: string;
+  body?: string;
+  url?: string;
+};
+
 type Evento = {
-  title: string;
   subtitle: string;
   heroImage: string;
-  description: string;
-  program: string;
-  closing: string;
+  contentBlocks: BlocoEvento[];
 };
 
 const eventoPadrao: Evento = {
-  title: 'Abertura da Temporada de Montanhismo',
   subtitle: 'Encontros que celebram as montanhas e a natureza de Teresópolis.',
   heroImage: imagensATM[0],
-  description:
-    'A Abertura da Temporada de Montanhismo, conhecida como ATM, é um dos eventos mais importantes do calendário outdoor de Teresópolis. O encontro acontece no Parque Nacional da Serra dos Órgãos (PARNASO) e reúne montanhistas, grupos de caminhada, escaladores, moradores e visitantes para celebrar o início da temporada nas montanhas.',
-  program:
-    'A programação costuma valorizar a cultura do montanhismo por meio de atividades ao ar livre, caminhadas, escaladas, rodas de conversa, oficinas e momentos de integração. Mais do que marcar o começo de um período de maior movimento nas trilhas, a ATM aproxima o público da história, da paisagem e das práticas responsáveis que fazem parte da vida na Serra dos Órgãos.',
-  closing:
-    'Realizada em um dos cenários mais emblemáticos do montanhismo brasileiro, a ATM destaca Teresópolis como a Capital Nacional do Montanhismo. É uma oportunidade para conhecer novas pessoas, descobrir atividades na serra e lembrar que a aventura fica ainda melhor quando caminhamos com cuidado e respeito pelo ambiente.',
+  contentBlocks: [
+    {
+      id: 'description',
+      type: 'text',
+      title: 'Abertura da Temporada de Montanhismo',
+      body:
+        'A Abertura da Temporada de Montanhismo, conhecida como ATM, é um dos eventos mais importantes do calendário outdoor de Teresópolis. O encontro acontece no Parque Nacional da Serra dos Órgãos (PARNASO) e reúne montanhistas, grupos de caminhada, escaladores, moradores e visitantes para celebrar o início da temporada nas montanhas.',
+    },
+    { id: 'gallery-0', type: 'image', url: imagensATM[1] },
+    {
+      id: 'program',
+      type: 'text',
+      title: 'Montanhas, esporte e encontro',
+      body:
+        'A programação costuma valorizar a cultura do montanhismo por meio de atividades ao ar livre, caminhadas, escaladas, rodas de conversa, oficinas e momentos de integração. Mais do que marcar o começo de um período de maior movimento nas trilhas, a ATM aproxima o público da história, da paisagem e das práticas responsáveis que fazem parte da vida na Serra dos Órgãos.',
+    },
+    {
+      id: 'conservation',
+      type: 'text',
+      body:
+        'O evento também reforça a importância da segurança e da conservação. Antes de visitar o parque, é importante conferir a programação e as regras da edição, respeitar as orientações da equipe, planejar o percurso e não deixar resíduos na natureza.',
+    },
+    { id: 'gallery-1', type: 'image', url: imagensATM[2] },
+    {
+      id: 'closing',
+      type: 'text',
+      title: 'Uma celebração de Teresópolis',
+      body:
+        'Realizada em um dos cenários mais emblemáticos do montanhismo brasileiro, a ATM destaca Teresópolis como a Capital Nacional do Montanhismo. É uma oportunidade para conhecer novas pessoas, descobrir atividades na serra e lembrar que a aventura fica ainda melhor quando caminhamos com cuidado e respeito pelo ambiente.',
+    },
+  ],
 };
+
+function blocosLegados(data: Record<string, any>): BlocoEvento[] {
+  if (Array.isArray(data.contentBlocks)) {
+    return data.contentBlocks.map((bloco, indice) => ({
+      id: typeof bloco.id === 'string' ? bloco.id : `bloco-${indice}`,
+      type: bloco.type === 'image' ? 'image' : 'text',
+      title: typeof bloco.title === 'string' ? bloco.title : '',
+      body: typeof bloco.body === 'string' ? bloco.body : '',
+      url: typeof bloco.url === 'string' ? bloco.url : '',
+    }));
+  }
+
+  const imagens = Array.isArray(data.galleryImages)
+    ? data.galleryImages
+    : imagensATM.slice(1);
+  const textosAdicionais = Array.isArray(data.additionalTexts)
+    ? data.additionalTexts
+    : [];
+
+  return [
+    {
+      id: 'description',
+      type: 'text',
+      title: data.title || 'Abertura da Temporada de Montanhismo',
+      body: data.description || eventoPadrao.contentBlocks[0].body,
+    },
+    ...textosAdicionais.map((body: string, indice: number) => ({
+      id: `texto-adicional-${indice}`,
+      type: 'text' as const,
+      title: '',
+      body,
+    })),
+    ...(imagens[0] ? [{ id: 'gallery-0', type: 'image' as const, url: imagens[0] }] : []),
+    {
+      id: 'program',
+      type: 'text',
+      title: data.programTitle || 'Montanhas, esporte e encontro',
+      body: data.program || eventoPadrao.contentBlocks[2].body,
+    },
+    {
+      id: 'conservation',
+      type: 'text',
+      title: '',
+      body:
+        data.conservation ||
+        eventoPadrao.contentBlocks[3].body,
+    },
+    ...imagens.slice(1).map((url: string, indice: number) => ({
+      id: `gallery-${indice + 1}`,
+      type: 'image' as const,
+      url,
+    })),
+    {
+      id: 'closing',
+      type: 'text',
+      title: data.closingTitle || 'Uma celebração de Teresópolis',
+      body: data.closing || eventoPadrao.contentBlocks[5].body,
+    },
+  ];
+}
 
 export default function EventosScreen() {
   const { role } = useAuth();
@@ -46,12 +135,9 @@ export default function EventosScreen() {
 
       const data = snapshot.data();
       const atualizado: Evento = {
-        title: data.title || eventoPadrao.title,
         subtitle: data.subtitle || eventoPadrao.subtitle,
         heroImage: data.heroImage || eventoPadrao.heroImage,
-        description: data.description || eventoPadrao.description,
-        program: data.program || eventoPadrao.program,
-        closing: data.closing || eventoPadrao.closing,
+        contentBlocks: blocosLegados(data),
       };
       setEvento(atualizado);
       setRascunho(atualizado);
@@ -60,8 +146,15 @@ export default function EventosScreen() {
 
   async function salvarEvento() {
     try {
-      await setDoc(doc(db, 'events', 'atm'), rascunho, { merge: true });
-      setEvento(rascunho);
+      const atualizado = {
+        ...rascunho,
+        contentBlocks: rascunho.contentBlocks.filter((bloco) =>
+          bloco.type === 'image' ? bloco.url?.trim() : bloco.title?.trim() || bloco.body?.trim(),
+        ),
+      };
+      await setDoc(doc(db, 'events', 'atm'), atualizado, { merge: true });
+      setEvento(atualizado);
+      setRascunho(atualizado);
       setEditando(false);
       Alert.alert('Evento atualizado', 'As alterações já estão disponíveis para os usuários.');
     } catch {
@@ -69,8 +162,42 @@ export default function EventosScreen() {
     }
   }
 
-  function atualizarCampo(campo: keyof Evento, valor: string) {
+  function atualizarCampo(campo: 'subtitle' | 'heroImage', valor: string) {
     setRascunho((atual) => ({ ...atual, [campo]: valor }));
+  }
+
+  function atualizarBloco(id: string, alteracoes: Partial<BlocoEvento>) {
+    setRascunho((atual) => ({
+      ...atual,
+      contentBlocks: atual.contentBlocks.map((bloco) =>
+        bloco.id === id ? { ...bloco, ...alteracoes } : bloco,
+      ),
+    }));
+  }
+
+  function moverBloco(indice: number, direcao: -1 | 1) {
+    setRascunho((atual) => {
+      const novoIndice = indice + direcao;
+      if (novoIndice < 0 || novoIndice >= atual.contentBlocks.length) return atual;
+
+      const contentBlocks = [...atual.contentBlocks];
+      [contentBlocks[indice], contentBlocks[novoIndice]] = [
+        contentBlocks[novoIndice],
+        contentBlocks[indice],
+      ];
+      return { ...atual, contentBlocks };
+    });
+  }
+
+  function adicionarBloco(type: BlocoEvento['type']) {
+    const id = `bloco-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const bloco: BlocoEvento = type === 'image'
+      ? { id, type, url: '' }
+      : { id, type, title: '', body: '' };
+    setRascunho((atual) => ({
+      ...atual,
+      contentBlocks: [...atual.contentBlocks, bloco],
+    }));
   }
 
   return (
@@ -82,19 +209,96 @@ export default function EventosScreen() {
 
       <Text style={styles.title}>🎉 Eventos</Text>
       {role === 'admin' && (
-        <Pressable style={styles.editButton} onPress={() => setEditando((atual) => !atual)}>
+        <Pressable
+          style={styles.editButton}
+          onPress={() => {
+            if (editando) setRascunho(evento);
+            setEditando((atual) => !atual);
+          }}
+        >
           <Text style={styles.editButtonText}>{editando ? 'Cancelar edição' : 'Editar evento'}</Text>
         </Pressable>
       )}
 
       {editando ? (
         <View style={styles.editor}>
-          <TextInput style={styles.editorInput} value={rascunho.title} onChangeText={(valor) => atualizarCampo('title', valor)} placeholder="Título" />
+          <Text style={styles.fieldLabel}>Subtítulo</Text>
           <TextInput style={styles.editorInput} value={rascunho.subtitle} onChangeText={(valor) => atualizarCampo('subtitle', valor)} placeholder="Subtítulo" />
+          <Text style={styles.fieldLabel}>URL da foto de capa</Text>
           <TextInput style={styles.editorInput} value={rascunho.heroImage} onChangeText={(valor) => atualizarCampo('heroImage', valor)} placeholder="URL da imagem principal" autoCapitalize="none" />
-          <TextInput style={[styles.editorInput, styles.editorTextArea]} value={rascunho.description} onChangeText={(valor) => atualizarCampo('description', valor)} placeholder="Descrição" multiline />
-          <TextInput style={[styles.editorInput, styles.editorTextArea]} value={rascunho.program} onChangeText={(valor) => atualizarCampo('program', valor)} placeholder="Programação" multiline />
-          <TextInput style={[styles.editorInput, styles.editorTextArea]} value={rascunho.closing} onChangeText={(valor) => atualizarCampo('closing', valor)} placeholder="Texto final" multiline />
+          <Text style={styles.fieldLabel}>Conteúdo do evento</Text>
+          {rascunho.contentBlocks.map((bloco, indice) => (
+            <View key={bloco.id} style={styles.blockEditor}>
+              <View style={styles.blockEditorHeader}>
+                <Text style={styles.blockType}>{bloco.type === 'image' ? 'Foto' : 'Texto'}</Text>
+                <View style={styles.blockActions}>
+                  <Pressable
+                    style={[styles.orderButton, indice === 0 && styles.disabledButton]}
+                    onPress={() => moverBloco(indice, -1)}
+                    disabled={indice === 0}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Mover bloco ${indice + 1} para cima`}
+                  >
+                    <Text style={styles.orderButtonText}>Subir</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.orderButton, indice === rascunho.contentBlocks.length - 1 && styles.disabledButton]}
+                    onPress={() => moverBloco(indice, 1)}
+                    disabled={indice === rascunho.contentBlocks.length - 1}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Mover bloco ${indice + 1} para baixo`}
+                  >
+                    <Text style={styles.orderButtonText}>Descer</Text>
+                  </Pressable>
+                  <Pressable
+                    style={styles.removeImageButton}
+                    onPress={() => setRascunho((atual) => ({
+                      ...atual,
+                      contentBlocks: atual.contentBlocks.filter((item) => item.id !== bloco.id),
+                    }))}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remover bloco ${indice + 1}`}
+                  >
+                    <Text style={styles.removeImageText}>Remover</Text>
+                  </Pressable>
+                </View>
+              </View>
+              {bloco.type === 'image' ? (
+                <TextInput
+                  style={styles.editorInput}
+                  value={bloco.url}
+                  onChangeText={(valor) => atualizarBloco(bloco.id, { url: valor })}
+                  placeholder="URL da foto"
+                  autoCapitalize="none"
+                  keyboardType="url"
+                />
+              ) : (
+                <>
+                  <TextInput
+                    style={styles.editorInput}
+                    value={bloco.title}
+                    onChangeText={(valor) => atualizarBloco(bloco.id, { title: valor })}
+                    placeholder="Título (opcional)"
+                  />
+                  <TextInput
+                    style={[styles.editorInput, styles.editorTextArea]}
+                    value={bloco.body}
+                    onChangeText={(valor) => atualizarBloco(bloco.id, { body: valor })}
+                    placeholder="Texto"
+                    multiline
+                  />
+                </>
+              )}
+            </View>
+          ))}
+          <View style={styles.addBlockActions}>
+            <Pressable style={styles.addImageButton} onPress={() => adicionarBloco('text')}>
+              <Text style={styles.addImageText}>+ Adicionar texto</Text>
+            </Pressable>
+            <Pressable style={styles.addImageButton} onPress={() => adicionarBloco('image')}>
+              <Text style={styles.addImageText}>+ Adicionar foto</Text>
+            </Pressable>
+          </View>
           <Pressable style={styles.saveButton} onPress={salvarEvento}>
             <Text style={styles.saveButtonText}>Salvar alterações</Text>
           </Pressable>
@@ -105,38 +309,18 @@ export default function EventosScreen() {
 
       <Image source={{ uri: evento.heroImage }} style={styles.heroImage} />
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>
-          {evento.title}
-        </Text>
-        <Text style={styles.cardText}>
-          {evento.description}
-        </Text>
-      </View>
-
-      <Image source={{ uri: imagensATM[1] }} style={styles.galleryImage} />
-
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Montanhas, esporte e encontro</Text>
-        <Text style={styles.cardText}>
-          {evento.program}
-        </Text>
-        <Text style={styles.cardText}>
-          O evento também reforça a importância da segurança e da conservação.
-          Antes de visitar o parque, é importante conferir a programação e as
-          regras da edição, respeitar as orientações da equipe, planejar o
-          percurso e não deixar resíduos na natureza.
-        </Text>
-      </View>
-
-      <Image source={{ uri: imagensATM[2] }} style={styles.galleryImage} />
-
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Uma celebração de Teresópolis</Text>
-        <Text style={styles.cardText}>
-          {evento.closing}
-        </Text>
-      </View>
+      {evento.contentBlocks.map((bloco) =>
+        bloco.type === 'image' ? (
+          bloco.url?.trim()
+            ? <Image key={bloco.id} source={{ uri: bloco.url }} style={styles.galleryImage} />
+            : null
+        ) : (
+          <View key={bloco.id} style={styles.card}>
+            {bloco.title?.trim() ? <Text style={styles.cardTitle}>{bloco.title}</Text> : null}
+            {bloco.body?.trim() ? <Text style={styles.cardText}>{bloco.body}</Text> : null}
+          </View>
+        ),
+      )}
     </ScrollView>
   );
 }
@@ -219,9 +403,85 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 10,
   },
+  fieldLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#26372B',
+    marginBottom: 6,
+  },
+  imageEditorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  imageInput: {
+    flex: 1,
+  },
+  removeImageButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    marginBottom: 10,
+  },
+  removeImageText: {
+    color: '#A43232',
+    fontWeight: '600',
+  },
+  addImageButton: {
+    borderWidth: 1,
+    borderColor: '#2E5D3B',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  addImageText: {
+    color: '#2E5D3B',
+    fontWeight: '600',
+  },
   editorTextArea: {
     minHeight: 110,
     textAlignVertical: 'top',
+  },
+  blockEditor: {
+    borderWidth: 1,
+    borderColor: '#D5DED5',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+  },
+  blockEditorHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    gap: 8,
+  },
+  blockType: {
+    fontWeight: '700',
+    color: '#26372B',
+  },
+  blockActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  orderButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    backgroundColor: '#E8F5E9',
+  },
+  orderButtonText: {
+    color: '#2E5D3B',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  disabledButton: {
+    opacity: 0.4,
+  },
+  addBlockActions: {
+    gap: 8,
+    marginBottom: 12,
   },
   saveButton: {
     backgroundColor: '#173D25',
