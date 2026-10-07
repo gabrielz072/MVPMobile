@@ -2,8 +2,11 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { UserAccountBar } from '@/components/UserAccountBar';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function HomeScreen() {
+  const { user } = useAuth();
+
   return (
     <View style={styles.container}>
       <UserAccountBar />
@@ -16,14 +19,16 @@ export default function HomeScreen() {
         Biodiversidade, trilhas, eventos e condições das atrações naturais.
       </Text>
 
-      <Pressable
-        style={styles.button}
-        onPress={() => router.push('/explore')}
-      >
-        <Text style={styles.buttonText}>
-          Onde ir?
-        </Text>
-      </Pressable>
+      {user && (
+        <Pressable
+          style={styles.button}
+          onPress={() => router.push('/explore')}
+        >
+          <Text style={styles.buttonText}>
+            Onde ir?
+          </Text>
+        </Pressable>
+      )}
 
       <Pressable
         style={styles.button}
