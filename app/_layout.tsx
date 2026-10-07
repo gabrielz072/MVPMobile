@@ -18,6 +18,13 @@ export default function RootLayout() {
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="eventos" options={{ headerShown: false }} />
+          <Stack.Screen name="natureza" options={{ headerShown: false }} />
+          <Stack.Screen name="trilha" options={{ headerShown: false }} />
+          <Stack.Screen name="trilhas" options={{ headerShown: false }} />
+          <Stack.Screen name="pedra-do-sino" options={{ headerShown: false }} />
+          <Stack.Screen name="escalavrado" options={{ headerShown: false }} />
+          <Stack.Screen name="pedra-do-acu" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         </Stack>
         <StatusBar style="auto" />

@@ -6,8 +6,10 @@ import { trilhas } from './data/trilhas';
 export default function TrilhasScreen() {
   return (
     <View style={styles.container}> 
-
       <UserAccountBar />
+      <Pressable style={styles.backButton} onPress={() => router.replace('/explore')}>
+        <Text style={styles.backText}>← Voltar</Text>
+      </Pressable>
 
       <Text style={styles.title}>
         🥾 Trilhas
@@ -48,6 +50,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
     padding: 24,
+  },
+  backButton: {
+    marginBottom: 16,
+  },
+  backText: {
+    fontSize: 17,
+    fontWeight: 'bold',
   },
 
   title: {

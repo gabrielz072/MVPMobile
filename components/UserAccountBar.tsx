@@ -15,7 +15,19 @@ export function UserAccountBar() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.name}>Olá, {userName || 'usuário'}!</Text>
+      <View style={styles.accountInfo}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>
+            {(userName || 'U').trim().charAt(0).toUpperCase()}
+          </Text>
+        </View>
+        <View style={styles.userDetails}>
+          <Text style={styles.caption}>LOGADO COMO</Text>
+          <Text style={styles.name} numberOfLines={1}>
+            {userName || 'usuário'}
+          </Text>
+        </View>
+      </View>
       <Pressable style={styles.button} onPress={sair}>
         <Text style={styles.buttonText}>Sair</Text>
       </Pressable>
@@ -24,8 +36,44 @@ export function UserAccountBar() {
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'flex-end', alignSelf: 'flex-end', marginBottom: 24 },
-  name: { color: '#2E5D3B', fontSize: 17, fontWeight: 'bold', marginBottom: 10, textAlign: 'right' },
-  button: { borderColor: '#2E5D3B', borderWidth: 1, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 9 },
-  buttonText: { color: '#2E5D3B', fontSize: 15, fontWeight: 'bold' },
+  container: {
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E1E7DD',
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  accountInfo: {
+    alignItems: 'center',
+    flex: 1,
+    flexDirection: 'row',
+    marginRight: 12,
+    minWidth: 0,
+  },
+  avatar: {
+    alignItems: 'center',
+    backgroundColor: '#E8F0E8',
+    borderRadius: 18,
+    height: 36,
+    justifyContent: 'center',
+    marginRight: 10,
+    width: 36,
+  },
+  avatarText: { color: '#2E5D3B', fontSize: 16, fontWeight: 'bold' },
+  userDetails: { flex: 1, minWidth: 0 },
+  caption: { color: '#687568', fontSize: 10, fontWeight: 'bold', marginBottom: 2 },
+  name: { color: '#263B2B', fontSize: 14, fontWeight: 'bold' },
+  button: {
+    backgroundColor: '#F1F4EF',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+  },
+  buttonText: { color: '#2E5D3B', fontSize: 14, fontWeight: 'bold' },
 });
