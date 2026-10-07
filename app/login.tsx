@@ -1,12 +1,12 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-  Alert,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    Alert,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from 'react-native';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,6 +15,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [entrando, setEntrando] = useState(false);
+  const [erroLogin, setErroLogin] = useState<string | null>(null);
   const { login } = useAuth();
 
   async function fazerLogin() {
@@ -24,6 +25,7 @@ export default function LoginScreen() {
     }
 
     setEntrando(true);
+    setErroLogin(null);
     try {
       await login(email, senha);
       router.replace('/');
@@ -42,8 +44,7 @@ export default function LoginScreen() {
         'auth/operation-not-allowed':
           'O login por e-mail e senha não está habilitado no Firebase.',
       };
-      Alert.alert(
-        'Não foi possível entrar',
+      setErroLogin(
         mensagens[code] ?? 'Ocorreu um erro inesperado. Tente novamente.',
       );
     } finally {
@@ -70,7 +71,10 @@ export default function LoginScreen() {
         style={styles.input}
         placeholder="Digite seu e-mail"
         value={email}
-        onChangeText={setEmail}
+        onChangeText={(value) => {
+          setEmail(value);
+          setErroLogin(null);
+        }}
         keyboardType="email-address"
         autoCapitalize="none"
       />
@@ -83,9 +87,18 @@ export default function LoginScreen() {
         style={styles.input}
         placeholder="Digite sua senha"
         value={senha}
-        onChangeText={setSenha}
+        onChangeText={(value) => {
+          setSenha(value);
+          setErroLogin(null);
+        }}
         secureTextEntry
       />
+
+      {erroLogin && (
+        <Text style={styles.errorMessage} accessibilityRole="alert">
+          {erroLogin}
+        </Text>
+      )}
 
       <Pressable
         style={[styles.button, entrando && styles.buttonDisabled]}
@@ -145,6 +158,13 @@ const styles = StyleSheet.create({
     padding: 15,
     fontSize: 16,
     marginBottom: 20,
+  },
+
+  errorMessage: {
+    color: '#B42318',
+    fontSize: 14,
+    marginTop: -8,
+    marginBottom: 12,
   },
 
   button: {
