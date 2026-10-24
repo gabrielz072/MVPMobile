@@ -1,11 +1,34 @@
-import { router } from 'expo-router';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { UserAccountBar } from '@/components/UserAccountBar';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
+import { router } from 'expo-router';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import {
+  Alert,
+  Image,
+  ImageBackground,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+
+const COLORS = {
+  background: '#f8f4f0',
+  darkGreen: '#1A481F',
+  mediumGreen: '#246D2C',
+  green: '#2F8F3A',
+  white: '#FFFFFF',
+  text: '#263529',
+  muted: '#777D75',
+  border: '#E2E7DE',
+  lightGreen: '#EDF3E9',
+  red: '#A43232',
+};
 
 const imagensATM = [
   'https://images.unsplash.com/photo-1511497584788-876760111969',
@@ -28,7 +51,8 @@ type Evento = {
 };
 
 const eventoPadrao: Evento = {
-  subtitle: 'Encontros que celebram as montanhas e a natureza de Teresópolis.',
+  subtitle:
+    'Encontros que celebram as montanhas e a natureza de Teresópolis.',
   heroImage: imagensATM[0],
   contentBlocks: [
     {
@@ -77,6 +101,7 @@ function blocosLegados(data: Record<string, any>): BlocoEvento[] {
   const imagens = Array.isArray(data.galleryImages)
     ? data.galleryImages
     : imagensATM.slice(1);
+
   const textosAdicionais = Array.isArray(data.additionalTexts)
     ? data.additionalTexts
     : [];
@@ -94,7 +119,9 @@ function blocosLegados(data: Record<string, any>): BlocoEvento[] {
       title: '',
       body,
     })),
-    ...(imagens[0] ? [{ id: 'gallery-0', type: 'image' as const, url: imagens[0] }] : []),
+    ...(imagens[0]
+      ? [{ id: 'gallery-0', type: 'image' as const, url: imagens[0] }]
+      : []),
     {
       id: 'program',
       type: 'text',
@@ -105,9 +132,7 @@ function blocosLegados(data: Record<string, any>): BlocoEvento[] {
       id: 'conservation',
       type: 'text',
       title: '',
-      body:
-        data.conservation ||
-        eventoPadrao.contentBlocks[3].body,
+      body: data.conservation || eventoPadrao.contentBlocks[3].body,
     },
     ...imagens.slice(1).map((url: string, indice: number) => ({
       id: `gallery-${indice + 1}`,
@@ -125,40 +150,63 @@ function blocosLegados(data: Record<string, any>): BlocoEvento[] {
 
 export default function EventosScreen() {
   const { role } = useAuth();
-  const [evento, setEvento] = useState(eventoPadrao);
-  const [rascunho, setRascunho] = useState(eventoPadrao);
+
+  const [evento, setEvento] = useState<Evento>(eventoPadrao);
+  const [rascunho, setRascunho] = useState<Evento>(eventoPadrao);
   const [editando, setEditando] = useState(false);
+  const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
     return onSnapshot(doc(db, 'events', 'atm'), (snapshot) => {
       if (!snapshot.exists()) return;
 
       const data = snapshot.data();
+
       const atualizado: Evento = {
         subtitle: data.subtitle || eventoPadrao.subtitle,
         heroImage: data.heroImage || eventoPadrao.heroImage,
         contentBlocks: blocosLegados(data),
       };
+
       setEvento(atualizado);
       setRascunho(atualizado);
     });
   }, []);
 
   async function salvarEvento() {
+    if (salvando) return;
+
     try {
-      const atualizado = {
+      setSalvando(true);
+
+      const atualizado: Evento = {
         ...rascunho,
         contentBlocks: rascunho.contentBlocks.filter((bloco) =>
-          bloco.type === 'image' ? bloco.url?.trim() : bloco.title?.trim() || bloco.body?.trim(),
+          bloco.type === 'image'
+            ? Boolean(bloco.url?.trim())
+            : Boolean(bloco.title?.trim() || bloco.body?.trim()),
         ),
       };
-      await setDoc(doc(db, 'events', 'atm'), atualizado, { merge: true });
+
+      await setDoc(doc(db, 'events', 'atm'), atualizado, {
+        merge: true,
+      });
+
       setEvento(atualizado);
       setRascunho(atualizado);
       setEditando(false);
-      Alert.alert('Evento atualizado', 'As alterações já estão disponíveis para os usuários.');
+
+      Alert.alert(
+        'Evento atualizado',
+        'As alterações já estão disponíveis para os usuários.',
+      );
     } catch {
-      Alert.alert('Acesso negado', 'Somente administradores podem alterar eventos.');
+      Alert.alert(
+        'Não foi possível salvar',
+        'Verifique sua conexão e se sua conta tem permissão para alterar eventos.',
+      );
+    } finally {
+      setSalvando(false);
     }
   }
 
@@ -178,319 +226,832 @@ export default function EventosScreen() {
   function moverBloco(indice: number, direcao: -1 | 1) {
     setRascunho((atual) => {
       const novoIndice = indice + direcao;
-      if (novoIndice < 0 || novoIndice >= atual.contentBlocks.length) return atual;
+
+      if (
+        novoIndice < 0 ||
+        novoIndice >= atual.contentBlocks.length
+      ) {
+        return atual;
+      }
 
       const contentBlocks = [...atual.contentBlocks];
+
       [contentBlocks[indice], contentBlocks[novoIndice]] = [
         contentBlocks[novoIndice],
         contentBlocks[indice],
       ];
+
       return { ...atual, contentBlocks };
     });
   }
 
   function adicionarBloco(type: BlocoEvento['type']) {
-    const id = `bloco-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const bloco: BlocoEvento = type === 'image'
-      ? { id, type, url: '' }
-      : { id, type, title: '', body: '' };
+    const id = `bloco-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
+
+    const bloco: BlocoEvento =
+      type === 'image'
+        ? { id, type, url: '' }
+        : { id, type, title: '', body: '' };
+
     setRascunho((atual) => ({
       ...atual,
       contentBlocks: [...atual.contentBlocks, bloco],
     }));
   }
 
+  function removerBloco(id: string) {
+    setRascunho((atual) => ({
+      ...atual,
+      contentBlocks: atual.contentBlocks.filter(
+        (bloco) => bloco.id !== id,
+      ),
+    }));
+  }
+
+  function alternarEdicao() {
+    if (editando) {
+      setRascunho(evento);
+      setEditando(false);
+    } else {
+      setRascunho(evento);
+      setEditando(true);
+    }
+  }
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <UserAccountBar />
-      <Pressable style={styles.backButton} onPress={() => router.back()}>
-        <Text style={styles.backText}>← Voltar</Text>
-      </Pressable>
+    <View style={styles.screen}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <UserAccountBar />
 
-      <Text style={styles.title}>🎉 Eventos</Text>
-      {role === 'admin' && (
         <Pressable
-          style={styles.editButton}
-          onPress={() => {
-            if (editando) setRascunho(evento);
-            setEditando((atual) => !atual);
-          }}
+          style={styles.backButton}
+          onPress={() => router.back()}
         >
-          <Text style={styles.editButtonText}>{editando ? 'Cancelar edição' : 'Editar evento'}</Text>
+          <Text style={styles.backText}>← Voltar</Text>
         </Pressable>
-      )}
 
-      {editando ? (
-        <View style={styles.editor}>
-          <Text style={styles.fieldLabel}>Subtítulo</Text>
-          <TextInput style={styles.editorInput} value={rascunho.subtitle} onChangeText={(valor) => atualizarCampo('subtitle', valor)} placeholder="Subtítulo" />
-          <Text style={styles.fieldLabel}>URL da foto de capa</Text>
-          <TextInput style={styles.editorInput} value={rascunho.heroImage} onChangeText={(valor) => atualizarCampo('heroImage', valor)} placeholder="URL da imagem principal" autoCapitalize="none" />
-          <Text style={styles.fieldLabel}>Conteúdo do evento</Text>
-          {rascunho.contentBlocks.map((bloco, indice) => (
-            <View key={bloco.id} style={styles.blockEditor}>
-              <View style={styles.blockEditorHeader}>
-                <Text style={styles.blockType}>{bloco.type === 'image' ? 'Foto' : 'Texto'}</Text>
-                <View style={styles.blockActions}>
-                  <Pressable
-                    style={[styles.orderButton, indice === 0 && styles.disabledButton]}
-                    onPress={() => moverBloco(indice, -1)}
-                    disabled={indice === 0}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Mover bloco ${indice + 1} para cima`}
-                  >
-                    <Text style={styles.orderButtonText}>Subir</Text>
-                  </Pressable>
-                  <Pressable
-                    style={[styles.orderButton, indice === rascunho.contentBlocks.length - 1 && styles.disabledButton]}
-                    onPress={() => moverBloco(indice, 1)}
-                    disabled={indice === rascunho.contentBlocks.length - 1}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Mover bloco ${indice + 1} para baixo`}
-                  >
-                    <Text style={styles.orderButtonText}>Descer</Text>
-                  </Pressable>
-                  <Pressable
-                    style={styles.removeImageButton}
-                    onPress={() => setRascunho((atual) => ({
-                      ...atual,
-                      contentBlocks: atual.contentBlocks.filter((item) => item.id !== bloco.id),
-                    }))}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Remover bloco ${indice + 1}`}
-                  >
-                    <Text style={styles.removeImageText}>Remover</Text>
-                  </Pressable>
-                </View>
-              </View>
-              {bloco.type === 'image' ? (
-                <TextInput
-                  style={styles.editorInput}
-                  value={bloco.url}
-                  onChangeText={(valor) => atualizarBloco(bloco.id, { url: valor })}
-                  placeholder="URL da foto"
-                  autoCapitalize="none"
-                  keyboardType="url"
-                />
-              ) : (
-                <>
-                  <TextInput
-                    style={styles.editorInput}
-                    value={bloco.title}
-                    onChangeText={(valor) => atualizarBloco(bloco.id, { title: valor })}
-                    placeholder="Título (opcional)"
-                  />
-                  <TextInput
-                    style={[styles.editorInput, styles.editorTextArea]}
-                    value={bloco.body}
-                    onChangeText={(valor) => atualizarBloco(bloco.id, { body: valor })}
-                    placeholder="Texto"
-                    multiline
-                  />
-                </>
-              )}
-            </View>
-          ))}
-          <View style={styles.addBlockActions}>
-            <Pressable style={styles.addImageButton} onPress={() => adicionarBloco('text')}>
-              <Text style={styles.addImageText}>+ Adicionar texto</Text>
-            </Pressable>
-            <Pressable style={styles.addImageButton} onPress={() => adicionarBloco('image')}>
-              <Text style={styles.addImageText}>+ Adicionar foto</Text>
-            </Pressable>
-          </View>
-          <Pressable style={styles.saveButton} onPress={salvarEvento}>
-            <Text style={styles.saveButtonText}>Salvar alterações</Text>
-          </Pressable>
+        <View style={styles.heading}>
+          <Text style={styles.eyebrow}>CIRCUITO TERÊ VERDE</Text>
+          <Text style={styles.title}>Eventos 🎉</Text>
+          <Text style={styles.subtitle}>
+            {editando
+              ? 'Personalize as informações e a apresentação do evento.'
+              : evento.subtitle}
+          </Text>
         </View>
-      ) : (
-        <Text style={styles.subtitle}>{evento.subtitle}</Text>
-      )}
 
-      <Image source={{ uri: evento.heroImage }} style={styles.heroImage} />
+        {role === 'admin' && (
+          <View style={styles.adminPanel}>
+            <View style={styles.adminInfo}>
+              <View style={styles.adminIcon}>
+                <Text style={styles.adminIconText}>✎</Text>
+              </View>
+              <View style={styles.adminTextContainer}>
+                <Text style={styles.adminTitle}>
+                  Área do administrador
+                </Text>
+                <Text style={styles.adminSubtitle}>
+                  Gerencie o conteúdo desta página.
+                </Text>
+              </View>
+            </View>
 
-      {evento.contentBlocks.map((bloco) =>
-        bloco.type === 'image' ? (
-          bloco.url?.trim()
-            ? <Image key={bloco.id} source={{ uri: bloco.url }} style={styles.galleryImage} />
-            : null
-        ) : (
-          <View key={bloco.id} style={styles.card}>
-            {bloco.title?.trim() ? <Text style={styles.cardTitle}>{bloco.title}</Text> : null}
-            {bloco.body?.trim() ? <Text style={styles.cardText}>{bloco.body}</Text> : null}
+            <Pressable
+              style={[
+                styles.editButton,
+                editando && styles.cancelButton,
+              ]}
+              onPress={alternarEdicao}
+            >
+              <Text style={styles.editButtonText}>
+                {editando ? 'Cancelar edição' : 'Editar evento'}
+              </Text>
+            </Pressable>
           </View>
-        ),
-      )}
-    </ScrollView>
+        )}
+
+        {editando ? (
+          <View style={styles.editor}>
+            <View style={styles.editorHeading}>
+              <Text style={styles.editorTitle}>Editar evento</Text>
+              <Text style={styles.editorDescription}>
+                Atualize a capa, os textos e as imagens exibidas na página.
+              </Text>
+            </View>
+
+            <Text style={styles.fieldLabel}>Subtítulo</Text>
+            <TextInput
+              style={styles.editorInput}
+              value={rascunho.subtitle}
+              onChangeText={(valor) =>
+                atualizarCampo('subtitle', valor)
+              }
+              placeholder="Subtítulo do evento"
+              placeholderTextColor="#90998F"
+            />
+
+            <Text style={styles.fieldLabel}>URL da foto de capa</Text>
+            <TextInput
+              style={styles.editorInput}
+              value={rascunho.heroImage}
+              onChangeText={(valor) =>
+                atualizarCampo('heroImage', valor)
+              }
+              placeholder="https://..."
+              placeholderTextColor="#90998F"
+              autoCapitalize="none"
+              keyboardType="url"
+            />
+
+            <Text style={styles.fieldLabel}>Conteúdo do evento</Text>
+
+            {rascunho.contentBlocks.map((bloco, indice) => (
+              <View key={bloco.id} style={styles.blockEditor}>
+                <View style={styles.blockEditorHeader}>
+                  <View style={styles.blockTypeBadge}>
+                    <Text style={styles.blockType}>
+                      {bloco.type === 'image' ? '▧  FOTO' : '≡  TEXTO'}
+                    </Text>
+                  </View>
+
+                  <View style={styles.blockActions}>
+                    <Pressable
+                      style={[
+                        styles.orderButton,
+                        indice === 0 && styles.disabledButton,
+                      ]}
+                      onPress={() => moverBloco(indice, -1)}
+                      disabled={indice === 0}
+                    >
+                      <Text style={styles.orderButtonText}>↑</Text>
+                    </Pressable>
+
+                    <Pressable
+                      style={[
+                        styles.orderButton,
+                        indice === rascunho.contentBlocks.length - 1 &&
+                          styles.disabledButton,
+                      ]}
+                      onPress={() => moverBloco(indice, 1)}
+                      disabled={
+                        indice === rascunho.contentBlocks.length - 1
+                      }
+                    >
+                      <Text style={styles.orderButtonText}>↓</Text>
+                    </Pressable>
+
+                    <Pressable
+                      style={styles.removeButton}
+                      onPress={() => removerBloco(bloco.id)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Remover bloco ${indice + 1}`}
+                    >
+                      <Text style={styles.removeButtonText}>✕</Text>
+                    </Pressable>
+                  </View>
+                </View>
+
+                {bloco.type === 'image' ? (
+                  <>
+                    <Text style={styles.smallLabel}>URL da imagem</Text>
+                    <TextInput
+                      style={styles.editorInput}
+                      value={bloco.url}
+                      onChangeText={(valor) =>
+                        atualizarBloco(bloco.id, { url: valor })
+                      }
+                      placeholder="https://..."
+                      placeholderTextColor="#90998F"
+                      autoCapitalize="none"
+                      keyboardType="url"
+                    />
+                    {bloco.url?.trim() ? (
+                      <Image
+                        source={{ uri: bloco.url }}
+                        style={styles.editorImagePreview}
+                        resizeMode="cover"
+                      />
+                    ) : null}
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.smallLabel}>
+                      Título (opcional)
+                    </Text>
+                    <TextInput
+                      style={styles.editorInput}
+                      value={bloco.title}
+                      onChangeText={(valor) =>
+                        atualizarBloco(bloco.id, { title: valor })
+                      }
+                      placeholder="Título da seção"
+                      placeholderTextColor="#90998F"
+                    />
+
+                    <Text style={styles.smallLabel}>Texto</Text>
+                    <TextInput
+                      style={[
+                        styles.editorInput,
+                        styles.editorTextArea,
+                      ]}
+                      value={bloco.body}
+                      onChangeText={(valor) =>
+                        atualizarBloco(bloco.id, { body: valor })
+                      }
+                      placeholder="Escreva o conteúdo..."
+                      placeholderTextColor="#90998F"
+                      multiline
+                    />
+                  </>
+                )}
+              </View>
+            ))}
+
+            <View style={styles.addBlockActions}>
+              <Pressable
+                style={styles.addButton}
+                onPress={() => adicionarBloco('text')}
+              >
+                <Text style={styles.addButtonText}>
+                  + Adicionar texto
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.addButton}
+                onPress={() => adicionarBloco('image')}
+              >
+                <Text style={styles.addButtonText}>
+                  + Adicionar foto
+                </Text>
+              </Pressable>
+            </View>
+
+            <Pressable
+              style={[
+                styles.saveButton,
+                salvando && styles.disabledButton,
+              ]}
+              onPress={salvarEvento}
+              disabled={salvando}
+            >
+              <Text style={styles.saveButtonText}>
+                {salvando ? 'Salvando...' : '✓  Salvar alterações'}
+              </Text>
+            </Pressable>
+          </View>
+        ) : (
+          <>
+            <View style={styles.heroCard}>
+              <ImageBackground
+                source={{ uri: evento.heroImage }}
+                style={styles.heroImage}
+                imageStyle={styles.heroImageRadius}
+              >
+                <View style={styles.heroOverlay} />
+
+                <View style={styles.heroContent}>
+                  <View style={styles.heroTag}>
+                    <Text style={styles.heroTagText}>
+                      EVENTOS EM TERESÓPOLIS
+                    </Text>
+                  </View>
+
+                  <Text style={styles.heroTitle}>
+                    Aventura, cultura e natureza
+                  </Text>
+
+                  <Text style={styles.heroDescription}>
+                    Viva experiências que aproximam você da serra.
+                  </Text>
+                </View>
+              </ImageBackground>
+            </View>
+
+            <View style={styles.eventLabelRow}>
+              <View style={styles.eventLabelLine} />
+              <Text style={styles.eventLabel}>EM DESTAQUE</Text>
+              <View style={styles.eventLabelLine} />
+            </View>
+
+            {evento.contentBlocks.map((bloco) =>
+              bloco.type === 'image' ? (
+                bloco.url?.trim() ? (
+                  <View key={bloco.id} style={styles.galleryCard}>
+                    <Image
+                      source={{ uri: bloco.url }}
+                      style={styles.galleryImage}
+                      resizeMode="cover"
+                    />
+                  </View>
+                ) : null
+              ) : bloco.title?.trim() || bloco.body?.trim() ? (
+                <View key={bloco.id} style={styles.contentCard}>
+                  {bloco.title?.trim() ? (
+                    <Text style={styles.cardTitle}>{bloco.title}</Text>
+                  ) : null}
+
+                  {bloco.body?.trim() ? (
+                    <Text style={styles.cardText}>{bloco.body}</Text>
+                  ) : null}
+                </View>
+              ) : null,
+            )}
+
+            <View style={styles.closingCard}>
+              <Text style={styles.closingIcon}>🌿</Text>
+              <Text style={styles.closingTitle}>
+                Descubra Teresópolis
+              </Text>
+              <Text style={styles.closingText}>
+                Explore, participe e preserve. As melhores experiências
+                são aquelas que respeitam a natureza.
+              </Text>
+            </View>
+          </>
+        )}
+      </ScrollView>
+
+      <View style={styles.bottomNav}>
+        <NavItem
+          icon="⌂"
+          label="Início"
+          onPress={() => router.replace('/')}
+        />
+        <NavItem
+          icon="🧭"
+          label="Onde ir"
+          onPress={() => router.replace('/explore')}
+        />
+        <NavItem
+          icon="🥾"
+          label="Trilhas"
+          onPress={() => router.push('/trilhas')}
+        />
+        <NavItem
+          icon="🌿"
+          label="Natureza"
+          onPress={() => router.push('/natureza')}
+        />
+        <NavItem
+          icon="🎉"
+          label="Eventos"
+          active
+          onPress={() => router.replace('/eventos')}
+        />
+      </View>
+    </View>
+  );
+}
+
+function NavItem({
+  icon,
+  label,
+  active = false,
+  onPress,
+}: {
+  icon: string;
+  label: string;
+  active?: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable style={styles.navItem} onPress={onPress}>
+      <Text style={[styles.navIcon, active && styles.navActive]}>
+        {icon}
+      </Text>
+      <Text style={[styles.navLabel, active && styles.navLabelActive]}>
+        {label}
+      </Text>
+      {active && <View style={styles.activeIndicator} />}
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: COLORS.background,
+  },
+  scroll: {
+    flex: 1,
   },
   content: {
-    padding: 24,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 30,
   },
   backButton: {
-    marginBottom: 16,
+    alignSelf: 'flex-start',
+    marginTop: 18,
+    marginBottom: 20,
+    paddingVertical: 7,
+    paddingRight: 12,
   },
   backText: {
-    fontSize: 17,
-    fontWeight: 'bold',
+    color: COLORS.darkGreen,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  heading: {
+    marginBottom: 22,
+  },
+  eyebrow: {
+    color: COLORS.green,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 2,
+    marginBottom: 8,
   },
   title: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    color: 'black',
-    marginBottom: 10,
+    color: COLORS.darkGreen,
+    fontSize: 32,
+    fontWeight: '800',
+    letterSpacing: -0.7,
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
-    color: 'gray',
-    lineHeight: 24,
-    marginBottom: 24,
+    color: COLORS.muted,
+    fontSize: 15,
+    lineHeight: 23,
+  },
+  adminPanel: {
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 18,
+    padding: 15,
+    marginBottom: 22,
+    gap: 14,
+  },
+  adminInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  adminIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 13,
+    backgroundColor: COLORS.lightGreen,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  adminIconText: {
+    color: COLORS.darkGreen,
+    fontSize: 22,
+    fontWeight: '800',
+  },
+  adminTextContainer: {
+    flex: 1,
+  },
+  adminTitle: {
+    color: COLORS.darkGreen,
+    fontSize: 14,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  adminSubtitle: {
+    color: COLORS.muted,
+    fontSize: 12,
+  },
+  editButton: {
+    backgroundColor: COLORS.darkGreen,
+    borderRadius: 11,
+    alignItems: 'center',
+    paddingVertical: 13,
+  },
+  cancelButton: {
+    backgroundColor: '#6D756C',
+  },
+  editButtonText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  heroCard: {
+    overflow: 'hidden',
+    borderRadius: 22,
+    marginBottom: 28,
+    elevation: 4,
+    shadowColor: '#19391D',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
   },
   heroImage: {
-    width: '100%',
-    height: 220,
-    borderRadius: 16,
+    height: 275,
+    justifyContent: 'flex-end',
+    backgroundColor: COLORS.darkGreen,
+  },
+  heroImageRadius: {
+    borderRadius: 22,
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(12, 35, 16, 0.48)',
+  },
+  heroContent: {
+    padding: 21,
+  },
+  heroTag: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.19)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.4)',
+    borderRadius: 20,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    marginBottom: 13,
+  },
+  heroTagText: {
+    color: COLORS.white,
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 1.1,
+  },
+  heroTitle: {
+    color: COLORS.white,
+    fontSize: 27,
+    fontWeight: '800',
+    lineHeight: 33,
+    marginBottom: 8,
+  },
+  heroDescription: {
+    color: 'rgba(255,255,255,0.93)',
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  eventLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
     marginBottom: 20,
+  },
+  eventLabelLine: {
+    height: 1,
+    flex: 1,
+    backgroundColor: '#D7DFD3',
+  },
+  eventLabel: {
+    color: COLORS.green,
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1.8,
+  },
+  contentCard: {
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: '#EAECE5',
+    borderRadius: 18,
+    padding: 20,
+    marginBottom: 17,
+    elevation: 2,
+    shadowColor: '#19391D',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+  },
+  cardTitle: {
+    color: COLORS.darkGreen,
+    fontSize: 20,
+    fontWeight: '800',
+    lineHeight: 27,
+    marginBottom: 11,
+  },
+  cardText: {
+    color: '#5E675E',
+    fontSize: 14,
+    lineHeight: 24,
+  },
+  galleryCard: {
+    borderRadius: 18,
+    overflow: 'hidden',
+    marginBottom: 19,
+    backgroundColor: COLORS.lightGreen,
   },
   galleryImage: {
     width: '100%',
-    height: 180,
-    borderRadius: 14,
-    marginBottom: 20,
+    height: 210,
   },
-  card: {
-    backgroundColor: '#E8F5E9',
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 20,
+  closingCard: {
+    backgroundColor: COLORS.darkGreen,
+    borderRadius: 20,
+    padding: 23,
+    alignItems: 'center',
+    marginTop: 5,
+    marginBottom: 12,
   },
-  cardTitle: {
+  closingIcon: {
+    fontSize: 28,
+    marginBottom: 10,
+  },
+  closingTitle: {
+    color: COLORS.white,
     fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 12,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 9,
   },
-  cardText: {
-    fontSize: 15,
-    color: 'gray',
-    lineHeight: 23,
-    marginBottom: 12,
-  },
-  editButton: {
-    backgroundColor: '#2E5D3B',
-    padding: 12,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-    marginBottom: 18,
-  },
-  editButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+  closingText: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 13,
+    lineHeight: 21,
+    textAlign: 'center',
   },
   editor: {
-    marginBottom: 20,
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 20,
+    padding: 17,
+    marginBottom: 22,
+  },
+  editorHeading: {
+    marginBottom: 22,
+  },
+  editorTitle: {
+    color: COLORS.darkGreen,
+    fontSize: 22,
+    fontWeight: '800',
+    marginBottom: 7,
+  },
+  editorDescription: {
+    color: COLORS.muted,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  fieldLabel: {
+    color: COLORS.darkGreen,
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 8,
+    marginTop: 5,
+  },
+  smallLabel: {
+    color: COLORS.text,
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 7,
   },
   editorInput: {
     borderWidth: 1,
-    borderColor: '#C8D4C8',
-    borderRadius: 8,
-    backgroundColor: '#F8FBF7',
-    padding: 12,
-    marginBottom: 10,
-  },
-  fieldLabel: {
+    borderColor: '#DCE4D9',
+    borderRadius: 11,
+    backgroundColor: '#FAFBF8',
+    color: COLORS.text,
     fontSize: 14,
-    fontWeight: '600',
-    color: '#26372B',
-    marginBottom: 6,
-  },
-  imageEditorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  imageInput: {
-    flex: 1,
-  },
-  removeImageButton: {
+    paddingHorizontal: 13,
     paddingVertical: 12,
-    paddingHorizontal: 10,
-    marginBottom: 10,
-  },
-  removeImageText: {
-    color: '#A43232',
-    fontWeight: '600',
-  },
-  addImageButton: {
-    borderWidth: 1,
-    borderColor: '#2E5D3B',
-    borderRadius: 8,
-    padding: 12,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  addImageText: {
-    color: '#2E5D3B',
-    fontWeight: '600',
+    marginBottom: 15,
   },
   editorTextArea: {
-    minHeight: 110,
+    minHeight: 120,
     textAlignVertical: 'top',
   },
   blockEditor: {
     borderWidth: 1,
-    borderColor: '#D5DED5',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+    borderColor: COLORS.border,
+    backgroundColor: '#FCFCFA',
+    borderRadius: 14,
+    padding: 13,
+    marginBottom: 13,
   },
   blockEditorHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    alignItems: 'center',
     gap: 8,
+    marginBottom: 15,
+  },
+  blockTypeBadge: {
+    backgroundColor: COLORS.lightGreen,
+    borderRadius: 7,
+    paddingHorizontal: 9,
+    paddingVertical: 7,
   },
   blockType: {
-    fontWeight: '700',
-    color: '#26372B',
+    color: COLORS.darkGreen,
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0.5,
   },
   blockActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   orderButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#EAF1E7',
+    borderRadius: 8,
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   orderButtonText: {
-    color: '#2E5D3B',
-    fontSize: 12,
-    fontWeight: '600',
+    color: COLORS.darkGreen,
+    fontSize: 17,
+    fontWeight: '800',
+  },
+  removeButton: {
+    backgroundColor: '#FBEDEC',
+    borderRadius: 8,
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removeButtonText: {
+    color: COLORS.red,
+    fontSize: 14,
+    fontWeight: '800',
   },
   disabledButton: {
-    opacity: 0.4,
+    opacity: 0.35,
+  },
+  editorImagePreview: {
+    width: '100%',
+    height: 140,
+    borderRadius: 10,
+    marginBottom: 10,
+    backgroundColor: COLORS.lightGreen,
   },
   addBlockActions: {
-    gap: 8,
-    marginBottom: 12,
+    gap: 9,
+    marginTop: 3,
+    marginBottom: 15,
+  },
+  addButton: {
+    borderWidth: 1,
+    borderColor: COLORS.mediumGreen,
+    borderRadius: 11,
+    paddingVertical: 13,
+    alignItems: 'center',
+    backgroundColor: '#F7FAF5',
+  },
+  addButtonText: {
+    color: COLORS.darkGreen,
+    fontSize: 13,
+    fontWeight: '800',
   },
   saveButton: {
-    backgroundColor: '#173D25',
-    padding: 14,
-    borderRadius: 8,
+    backgroundColor: COLORS.darkGreen,
+    padding: 15,
+    borderRadius: 12,
     alignItems: 'center',
+    marginTop: 4,
   },
   saveButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  bottomNav: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.white,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingTop: 10,
+    paddingBottom: 8,
+    paddingHorizontal: 4,
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  navItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 47,
+    gap: 3,
+  },
+  navIcon: {
+    color: '#7E887D',
+    fontSize: 19,
+  },
+  navActive: {
+    color: COLORS.green,
+  },
+  navLabel: {
+    color: '#7E887D',
+    fontSize: 9,
+    fontWeight: '600',
+  },
+  navLabelActive: {
+    color: COLORS.darkGreen,
+    fontWeight: '800',
+  },
+  activeIndicator: {
+    width: 17,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: COLORS.green,
+    marginTop: 1,
   },
 });
