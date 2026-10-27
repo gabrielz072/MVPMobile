@@ -1,4 +1,3 @@
-
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -38,7 +37,7 @@ export default function AdminScreen() {
       Alert.alert(
         'Acesso restrito',
         'Esta área está disponível somente para a conta administradora.',
-        [{ text: 'Voltar', onPress: () => router.replace('/') }]
+        [{ text: 'Voltar', onPress: () => router.replace('/') }],
       );
       return;
     }
@@ -93,10 +92,14 @@ export default function AdminScreen() {
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>A</Text>
             </View>
+
             <View style={styles.accountInfo}>
-              <Text style={styles.accountLabel}>Sessão administrativa</Text>
+              <Text style={styles.accountLabel}>
+                Sessão administrativa
+              </Text>
               <Text style={styles.accountEmail}>{user?.email}</Text>
             </View>
+
             <Text style={styles.lock}>✓</Text>
           </View>
         </View>
@@ -116,52 +119,58 @@ export default function AdminScreen() {
             <View style={[styles.featureIcon, { backgroundColor: '#DCEED5' }]}>
               <Text style={styles.featureEmoji}>▦</Text>
             </View>
+
             <View style={styles.featureInfo}>
               <Text style={styles.featureTitle}>Eventos</Text>
               <Text style={styles.featureDescription}>
                 Edite e organize o conteúdo dos eventos.
               </Text>
-              <Text style={styles.featureLink}>GERENCIAR  →</Text>
+              <Text style={styles.featureLink}>GERENCIAR →</Text>
             </View>
+
             <Text style={styles.chevron}>›</Text>
           </Pressable>
 
           <Pressable
             style={styles.featureCard}
-            onPress={() => abrirTela('/trilhas')}
+            onPress={() => abrirTela('/admin-trilhas')}
           >
             <View style={[styles.featureIcon, { backgroundColor: '#E7E6CF' }]}>
               <Text style={styles.featureEmoji}>♧</Text>
             </View>
+
             <View style={styles.featureInfo}>
               <Text style={styles.featureTitle}>Trilhas e destinos</Text>
               <Text style={styles.featureDescription}>
-                Acesse as páginas das atrações naturais.
+                Gerencie os textos e as informações das atrações naturais.
               </Text>
-              <Text style={styles.featureLink}>VER DESTINOS  →</Text>
+              <Text style={styles.featureLink}>GERENCIAR →</Text>
             </View>
+
             <Text style={styles.chevron}>›</Text>
           </Pressable>
 
           <Pressable
             style={styles.featureCard}
-            onPress={() => abrirTela('/natureza')}
+            onPress={() => abrirTela('/admin-natureza')}
           >
             <View style={[styles.featureIcon, { backgroundColor: '#D9E9E7' }]}>
               <Text style={styles.featureEmoji}>❧</Text>
             </View>
+
             <View style={styles.featureInfo}>
               <Text style={styles.featureTitle}>Natureza</Text>
               <Text style={styles.featureDescription}>
-                Consulte a página informativa ambiental.
+                Edite os textos, as imagens e o conteúdo ambiental.
               </Text>
-              <Text style={styles.featureLink}>ABRIR PÁGINA  →</Text>
+              <Text style={styles.featureLink}>GERENCIAR →</Text>
             </View>
+
             <Text style={styles.chevron}>›</Text>
           </Pressable>
 
           <View style={styles.securityCard}>
-            <Text style={styles.securityTitle}>◈  Segurança do painel</Text>
+            <Text style={styles.securityTitle}>◈ Segurança do painel</Text>
             <Text style={styles.securityText}>
               Você está acessando a área administrativa com a conta
               autorizada. Encerre sua sessão ao terminar em um dispositivo
@@ -174,7 +183,7 @@ export default function AdminScreen() {
             onPress={() => router.replace('/')}
           >
             <Text style={styles.homeButtonText}>
-              ←  Voltar ao aplicativo
+              ← Voltar ao aplicativo
             </Text>
           </Pressable>
 
