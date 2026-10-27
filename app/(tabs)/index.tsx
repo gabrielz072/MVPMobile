@@ -1,4 +1,3 @@
-
 import { router } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import {
@@ -19,6 +18,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
+import MenuInferior from '@/components/MenuInferior';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } =
   Dimensions.get('window');
@@ -243,7 +243,7 @@ export default function HomeScreen() {
         subtitle: 'Montanhas, paisagens e lugares inesquecíveis.',
         image:
           'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=85',
-        route: '/explore',
+        route: '/natureza',
       },
       {
         title: 'Viva Teresópolis',
@@ -279,15 +279,18 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Text style={styles.homeEyebrow}>SEU PRÓXIMO DESTINO</Text>
+
           <Text style={styles.homeTitle}>
             A natureza está{'\n'}chamando.
           </Text>
+
           <Text style={styles.homeDescription}>
             Explore as belezas de Teresópolis e encontre sua próxima aventura.
           </Text>
 
           <View style={styles.galleryHeader}>
             <Text style={styles.galleryTitle}>Descubra o circuito</Text>
+
             <Text style={styles.galleryCounter}>
               {String(activeSlide + 1).padStart(2, '0')} / 03
             </Text>
@@ -305,7 +308,10 @@ export default function HomeScreen() {
               const index = Math.round(
                 event.nativeEvent.contentOffset.x / slideInterval,
               );
-              setActiveSlide(Math.max(0, Math.min(slides.length - 1, index)));
+
+              setActiveSlide(
+                Math.max(0, Math.min(slides.length - 1, index)),
+              );
             }}
           >
             {slides.map((slide, index) => (
@@ -335,13 +341,19 @@ export default function HomeScreen() {
                   </View>
 
                   <View style={styles.carouselTextContent}>
-                    <Text style={styles.carouselTitle}>{slide.title}</Text>
+                    <Text style={styles.carouselTitle}>
+                      {slide.title}
+                    </Text>
+
                     <Text style={styles.carouselSubtitle}>
                       {slide.subtitle}
                     </Text>
 
                     <View style={styles.carouselAction}>
-                      <Text style={styles.carouselActionText}>Explorar</Text>
+                      <Text style={styles.carouselActionText}>
+                        Explorar
+                      </Text>
+
                       <Text style={styles.carouselArrow}>↗</Text>
                     </View>
                   </View>
@@ -364,10 +376,12 @@ export default function HomeScreen() {
 
           <View style={styles.homeTip}>
             <Text style={styles.homeTipIcon}>✦</Text>
+
             <View style={styles.homeTipContent}>
               <Text style={styles.homeTipTitle}>
                 Sua próxima aventura começa aqui
               </Text>
+
               <Text style={styles.homeTipDescription}>
                 Toque em uma foto ou escolha uma opção no menu abaixo.
               </Text>
@@ -375,34 +389,7 @@ export default function HomeScreen() {
           </View>
         </ScrollView>
 
-        <View style={styles.bottomMenu}>
-          <Pressable
-            style={styles.menuItem}
-            onPress={() => router.push('/trilhas')}
-            accessibilityRole="button"
-          >
-            <Text style={styles.menuIcon}>⌁</Text>
-            <Text style={styles.menuLabel}>Trilhas</Text>
-          </Pressable>
-
-          <Pressable
-            style={styles.menuItem}
-            onPress={() => router.push('/explore')}
-            accessibilityRole="button"
-          >
-            <Text style={styles.menuIcon}>⌖</Text>
-            <Text style={styles.menuLabel}>Atrações</Text>
-          </Pressable>
-
-          <Pressable
-            style={styles.menuItem}
-            onPress={() => router.push('/eventos')}
-            accessibilityRole="button"
-          >
-            <Text style={styles.menuIcon}>▦</Text>
-            <Text style={styles.menuLabel}>Eventos</Text>
-          </Pressable>
-        </View>
+        <MenuInferior />
       </SafeAreaView>
     );
   }
@@ -437,12 +424,16 @@ export default function HomeScreen() {
                 {'\n'}
                 Verde
               </Text>
-              <Text style={styles.introSubtitle}>Explore conosco</Text>
+
+              <Text style={styles.introSubtitle}>
+                Explore conosco
+              </Text>
             </View>
 
             <View style={styles.goArea}>
               <View style={styles.chevrons}>
                 <Text style={styles.chevron}>⌃</Text>
+
                 <Text style={[styles.chevron, styles.chevronSecond]}>
                   ⌃
                 </Text>
@@ -544,7 +535,10 @@ export default function HomeScreen() {
                 />
 
                 {erroLogin && (
-                  <Text style={styles.errorMessage} accessibilityRole="alert">
+                  <Text
+                    style={styles.errorMessage}
+                    accessibilityRole="alert"
+                  >
                     {erroLogin}
                   </Text>
                 )}
@@ -582,6 +576,7 @@ export default function HomeScreen() {
                     <Text style={styles.adminLoginTitle}>
                       Área administrativa
                     </Text>
+
                     <Text style={styles.adminLoginSubtitle}>
                       Acesso exclusivo ao administrador
                     </Text>
@@ -1094,44 +1089,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 16,
     marginTop: 4,
-  },
-  bottomMenu: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    backgroundColor: COLORS.white,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    paddingTop: 12,
-    paddingBottom: 24,
-    paddingHorizontal: 12,
-    elevation: 15,
-    shadowColor: '#173D25',
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-  },
-  menuItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 3,
-    gap: 5,
-  },
-  menuIcon: {
-    color: COLORS.green,
-    fontSize: 25,
-    lineHeight: 29,
-    fontWeight: '700',
-  },
-  menuLabel: {
-    color: COLORS.green,
-    fontSize: 11,
-    fontWeight: '800',
   },
   authenticatedEyebrow: {
     color: '#64814F',

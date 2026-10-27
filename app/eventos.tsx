@@ -1,5 +1,5 @@
-
 import { UserAccountBar } from '@/components/UserAccountBar';
+import MenuInferior from '@/components/MenuInferior';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { router } from 'expo-router';
@@ -578,59 +578,8 @@ export default function EventosScreen() {
         )}
       </ScrollView>
 
-      <View style={styles.bottomNav}>
-        <NavItem
-          icon="⌂"
-          label="Início"
-          onPress={() => router.replace('/')}
-        />
-        <NavItem
-          icon="🧭"
-          label="Onde ir"
-          onPress={() => router.replace('/explore')}
-        />
-        <NavItem
-          icon="🥾"
-          label="Trilhas"
-          onPress={() => router.push('/trilhas')}
-        />
-        <NavItem
-          icon="🌿"
-          label="Natureza"
-          onPress={() => router.push('/natureza')}
-        />
-        <NavItem
-          icon="🎉"
-          label="Eventos"
-          active
-          onPress={() => router.replace('/eventos')}
-        />
-      </View>
+      <MenuInferior />
     </View>
-  );
-}
-
-function NavItem({
-  icon,
-  label,
-  active = false,
-  onPress,
-}: {
-  icon: string;
-  label: string;
-  active?: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable style={styles.navItem} onPress={onPress}>
-      <Text style={[styles.navIcon, active && styles.navActive]}>
-        {icon}
-      </Text>
-      <Text style={[styles.navLabel, active && styles.navLabelActive]}>
-        {label}
-      </Text>
-      {active && <View style={styles.activeIndicator} />}
-    </Pressable>
   );
 }
 
@@ -645,7 +594,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 24,
     paddingTop: 16,
-    paddingBottom: 30,
+    paddingBottom: 110,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -1012,46 +961,5 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 14,
     fontWeight: '800',
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.white,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    paddingTop: 10,
-    paddingBottom: 8,
-    paddingHorizontal: 4,
-    justifyContent: 'space-around',
-    alignItems: 'center',
-  },
-  navItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 47,
-    gap: 3,
-  },
-  navIcon: {
-    color: '#7E887D',
-    fontSize: 19,
-  },
-  navActive: {
-    color: COLORS.green,
-  },
-  navLabel: {
-    color: '#7E887D',
-    fontSize: 9,
-    fontWeight: '600',
-  },
-  navLabelActive: {
-    color: COLORS.darkGreen,
-    fontWeight: '800',
-  },
-  activeIndicator: {
-    width: 17,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: COLORS.green,
-    marginTop: 1,
   },
 });

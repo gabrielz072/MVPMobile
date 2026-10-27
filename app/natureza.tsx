@@ -1,5 +1,6 @@
 
 import { UserAccountBar } from '@/components/UserAccountBar';
+import MenuInferior from '@/components/MenuInferior';
 import { router } from 'expo-router';
 import {
   ImageBackground,
@@ -50,9 +51,7 @@ export default function NaturezaScreen() {
 
         <View style={styles.heading}>
           <Text style={styles.eyebrow}>CIRCUITO TERÊ VERDE</Text>
-
           <Text style={styles.title}>Natureza 🌿</Text>
-
           <Text style={styles.subtitle}>
             Biodiversidade e montanhas que fazem de Teresópolis
             um destino especial.
@@ -66,7 +65,6 @@ export default function NaturezaScreen() {
             imageStyle={styles.heroImageRadius}
           >
             <View style={styles.heroOverlay} />
-
             <View style={styles.heroContent}>
               <View style={styles.heroTag}>
                 <Text style={styles.heroTagText}>
@@ -110,7 +108,6 @@ export default function NaturezaScreen() {
             <View style={styles.cardIcon}>
               <Text style={styles.cardEmoji}>🌳</Text>
             </View>
-
             <View style={styles.cardHeadingText}>
               <Text style={styles.cardTitle}>
                 Biodiversidade da Mata Atlântica
@@ -161,7 +158,6 @@ export default function NaturezaScreen() {
             <View style={styles.cardIcon}>
               <Text style={styles.cardEmoji}>🥾</Text>
             </View>
-
             <View style={styles.cardHeadingText}>
               <Text style={styles.cardTitle}>
                 A Capital Nacional do Montanhismo
@@ -218,70 +214,8 @@ export default function NaturezaScreen() {
         </View>
       </ScrollView>
 
-      <View style={styles.bottomNav}>
-        <NavItem
-          icon="⌂"
-          label="Início"
-          onPress={() => router.replace('/')}
-        />
-
-        <NavItem
-          icon="🧭"
-          label="Onde ir"
-          onPress={() => router.replace('/explore')}
-        />
-
-        <NavItem
-          icon="🥾"
-          label="Trilhas"
-          onPress={() => router.push('/trilhas')}
-        />
-
-        <NavItem
-          icon="🌿"
-          label="Natureza"
-          active
-          onPress={() => router.replace('/natureza')}
-        />
-
-        <NavItem
-          icon="🎉"
-          label="Eventos"
-          onPress={() => router.push('/eventos')}
-        />
-      </View>
+      <MenuInferior />
     </View>
-  );
-}
-
-function NavItem({
-  icon,
-  label,
-  active = false,
-  onPress,
-}: {
-  icon: string;
-  label: string;
-  active?: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable style={styles.navItem} onPress={onPress}>
-      <Text style={[styles.navIcon, active && styles.navActive]}>
-        {icon}
-      </Text>
-
-      <Text
-        style={[
-          styles.navLabel,
-          active && styles.navLabelActive,
-        ]}
-      >
-        {label}
-      </Text>
-
-      {active && <View style={styles.activeIndicator} />}
-    </Pressable>
   );
 }
 
@@ -290,17 +224,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-
   scroll: {
     flex: 1,
   },
-
   content: {
     paddingHorizontal: 24,
     paddingTop: 16,
-    paddingBottom: 30,
+    paddingBottom: 110,
   },
-
   backButton: {
     alignSelf: 'flex-start',
     marginTop: 18,
@@ -308,17 +239,14 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     paddingRight: 12,
   },
-
   backText: {
     color: COLORS.darkGreen,
     fontSize: 14,
     fontWeight: '700',
   },
-
   heading: {
     marginBottom: 23,
   },
-
   eyebrow: {
     color: COLORS.green,
     fontSize: 11,
@@ -326,7 +254,6 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     marginBottom: 8,
   },
-
   title: {
     color: COLORS.darkGreen,
     fontSize: 32,
@@ -334,13 +261,11 @@ const styles = StyleSheet.create({
     letterSpacing: -0.7,
     marginBottom: 8,
   },
-
   subtitle: {
     color: COLORS.muted,
     fontSize: 15,
     lineHeight: 23,
   },
-
   heroCard: {
     borderRadius: 22,
     overflow: 'hidden',
@@ -351,26 +276,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 10,
   },
-
   heroImage: {
     height: 280,
     justifyContent: 'flex-end',
     backgroundColor: COLORS.darkGreen,
   },
-
   heroImageRadius: {
     borderRadius: 22,
   },
-
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(12, 35, 16, 0.5)',
   },
-
   heroContent: {
     padding: 21,
   },
-
   heroTag: {
     alignSelf: 'flex-start',
     backgroundColor: 'rgba(255,255,255,0.2)',
@@ -381,14 +301,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginBottom: 13,
   },
-
   heroTagText: {
     color: COLORS.white,
     fontSize: 9,
     fontWeight: '800',
     letterSpacing: 1,
   },
-
   heroTitle: {
     color: COLORS.white,
     fontSize: 27,
@@ -396,14 +314,12 @@ const styles = StyleSheet.create({
     lineHeight: 33,
     marginBottom: 8,
   },
-
   heroDescription: {
     color: 'rgba(255,255,255,0.93)',
     fontSize: 13,
     lineHeight: 20,
     marginBottom: 17,
   },
-
   heroButton: {
     alignSelf: 'flex-start',
     backgroundColor: COLORS.white,
@@ -414,36 +330,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-
   heroButtonText: {
     color: COLORS.darkGreen,
     fontSize: 13,
     fontWeight: '800',
   },
-
   heroArrow: {
     color: COLORS.darkGreen,
     fontSize: 17,
     fontWeight: '700',
   },
-
   sectionHeader: {
     marginBottom: 17,
   },
-
   sectionTitle: {
     color: COLORS.darkGreen,
     fontSize: 21,
     fontWeight: '800',
     marginBottom: 6,
   },
-
   sectionSubtitle: {
     color: COLORS.muted,
     fontSize: 13,
     lineHeight: 19,
   },
-
   infoCard: {
     backgroundColor: COLORS.white,
     borderWidth: 1,
@@ -457,14 +367,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 5,
   },
-
   cardHeading: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     marginBottom: 16,
   },
-
   cardIcon: {
     width: 45,
     height: 45,
@@ -473,15 +381,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   cardEmoji: {
     fontSize: 22,
   },
-
   cardHeadingText: {
     flex: 1,
   },
-
   cardTitle: {
     color: COLORS.darkGreen,
     fontSize: 18,
@@ -489,20 +394,17 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginBottom: 5,
   },
-
   cardKicker: {
     color: COLORS.green,
     fontSize: 9,
     fontWeight: '900',
     letterSpacing: 1.1,
   },
-
   cardText: {
     color: '#5E675E',
     fontSize: 14,
     lineHeight: 24,
   },
-
   imageCard: {
     borderRadius: 19,
     overflow: 'hidden',
@@ -513,26 +415,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 7,
   },
-
   secondaryImage: {
     height: 220,
     justifyContent: 'flex-end',
     backgroundColor: COLORS.darkGreen,
   },
-
   secondaryImageRadius: {
     borderRadius: 19,
   },
-
   secondaryOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(12, 30, 15, 0.38)',
   },
-
   secondaryImageContent: {
     padding: 20,
   },
-
   secondaryImageTag: {
     color: '#D9EACF',
     fontSize: 10,
@@ -540,14 +437,12 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     marginBottom: 8,
   },
-
   secondaryImageTitle: {
     color: COLORS.white,
     fontSize: 24,
     fontWeight: '800',
     lineHeight: 30,
   },
-
   detailsButton: {
     marginTop: 18,
     paddingTop: 14,
@@ -557,19 +452,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-
   detailsButtonText: {
     color: COLORS.darkGreen,
     fontSize: 13,
     fontWeight: '800',
   },
-
   detailsArrow: {
     color: COLORS.green,
     fontSize: 20,
     fontWeight: '800',
   },
-
   conservationCard: {
     backgroundColor: COLORS.darkGreen,
     borderRadius: 20,
@@ -577,12 +469,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 5,
   },
-
   conservationIcon: {
     fontSize: 28,
     marginBottom: 10,
   },
-
   conservationTitle: {
     color: COLORS.white,
     fontSize: 19,
@@ -591,20 +481,17 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     marginBottom: 9,
   },
-
   conservationText: {
     color: 'rgba(255,255,255,0.86)',
     fontSize: 13,
     lineHeight: 21,
     textAlign: 'center',
   },
-
   footer: {
     alignItems: 'center',
     paddingTop: 27,
     paddingBottom: 8,
   },
-
   footerTitle: {
     color: COLORS.darkGreen,
     fontSize: 13,
@@ -612,58 +499,9 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     marginBottom: 7,
   },
-
   footerText: {
     color: COLORS.muted,
     fontSize: 12,
     textAlign: 'center',
-  },
-
-  bottomNav: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.white,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    paddingTop: 10,
-    paddingBottom: 8,
-    paddingHorizontal: 4,
-    justifyContent: 'space-around',
-    alignItems: 'center',
-  },
-
-  navItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 47,
-    gap: 3,
-  },
-
-  navIcon: {
-    color: '#7E887D',
-    fontSize: 19,
-  },
-
-  navActive: {
-    color: COLORS.green,
-  },
-
-  navLabel: {
-    color: '#7E887D',
-    fontSize: 9,
-    fontWeight: '600',
-  },
-
-  navLabelActive: {
-    color: COLORS.darkGreen,
-    fontWeight: '800',
-  },
-
-  activeIndicator: {
-    width: 17,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: COLORS.green,
-    marginTop: 1,
   },
 });

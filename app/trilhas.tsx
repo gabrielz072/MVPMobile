@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { UserAccountBar } from '@/components/UserAccountBar';
+import MenuInferior from '@/components/MenuInferior';
 
 const COLORS = {
   background: '#f8f4f0',
@@ -118,53 +119,6 @@ function TrailCard({ trail }: { trail: Trail }) {
         </View>
       </View>
     </Pressable>
-  );
-}
-
-function BottomNavigation() {
-  return (
-    <View style={styles.bottomNavigation}>
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => router.push('/explore')}
-        style={styles.navItem}
-      >
-        <Text style={styles.navIcon}>⌂</Text>
-        <Text style={styles.navLabel}>Início</Text>
-      </Pressable>
-
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => router.push('/trilhas')}
-        style={styles.navItem}
-      >
-        <Text style={[styles.navIcon, styles.activeNavText]}>
-          ▲
-        </Text>
-        <Text style={[styles.navLabel, styles.activeNavText]}>
-          Trilhas
-        </Text>
-        <View style={styles.activeIndicator} />
-      </Pressable>
-
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => router.push('/natureza')}
-        style={styles.navItem}
-      >
-        <Text style={styles.navIcon}>♧</Text>
-        <Text style={styles.navLabel}>Atrações</Text>
-      </Pressable>
-
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => router.push('/eventos')}
-        style={styles.navItem}
-      >
-        <Text style={styles.navIcon}>▦</Text>
-        <Text style={styles.navLabel}>Eventos</Text>
-      </Pressable>
-    </View>
   );
 }
 
@@ -293,7 +247,7 @@ export default function TrilhasScreen() {
         </Text>
       </ScrollView>
 
-      <BottomNavigation />
+      <MenuInferior />
     </View>
   );
 }
@@ -319,7 +273,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 18,
-    paddingBottom: 28,
+    paddingBottom: 110,
   },
 
   heading: {
