@@ -71,46 +71,32 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="natureza"
-        options={{
-          title: 'Natureza',
-          tabBarIcon: ({ color, focused }) => (
-            <IconeAba
-              name={focused ? 'leaf' : 'leaf-outline'}
-              color={color}
-              focused={focused}
-            />
-          ),
-        }}
-        listeners={{
-          tabPress: (event) => {
-            event.preventDefault();
-            const { router } = require('expo-router');
-            router.push('/natureza');
-          },
-        }}
+  name="natureza"
+  options={{
+    title: 'Natureza',
+    tabBarIcon: ({ color, focused }) => (
+      <IconeAba
+        name={focused ? 'leaf' : 'leaf-outline'}
+        color={color}
+        focused={focused}
       />
+    ),
+  }}
+/>
 
       <Tabs.Screen
-        name="eventos"
-        options={{
-          title: 'Eventos',
-          tabBarIcon: ({ color, focused }) => (
-            <IconeAba
-              name={focused ? 'calendar' : 'calendar-outline'}
-              color={color}
-              focused={focused}
-            />
-          ),
-        }}
-        listeners={{
-          tabPress: (event) => {
-            event.preventDefault();
-            const { router } = require('expo-router');
-            router.push('/eventos');
-          },
-        }}
+  name="eventos"
+  options={{
+    title: 'Eventos',
+    tabBarIcon: ({ color, focused }) => (
+      <IconeAba
+        name={focused ? 'calendar' : 'calendar-outline'}
+        color={color}
+        focused={focused}
       />
+    ),
+  }}
+/>
 
       <Tabs.Screen
         name="perfil"

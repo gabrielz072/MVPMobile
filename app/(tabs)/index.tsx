@@ -18,7 +18,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
-import MenuInferior from '@/components/MenuInferior';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } =
   Dimensions.get('window');
@@ -388,8 +387,6 @@ export default function HomeScreen() {
             </View>
           </View>
         </ScrollView>
-
-        <MenuInferior />
       </SafeAreaView>
     );
   }

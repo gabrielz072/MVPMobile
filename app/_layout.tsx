@@ -52,16 +52,6 @@ export default function RootLayout() {
           />
 
           <Stack.Screen
-            name="eventos"
-            options={{ headerShown: false }}
-          />
-
-          <Stack.Screen
-            name="natureza"
-            options={{ headerShown: false }}
-          />
-
-          <Stack.Screen
             name="trilha"
             options={{ headerShown: false }}
           />
