@@ -1,5 +1,7 @@
 import { UserAccountBar } from '@/components/UserAccountBar';
 import MenuInferior from '@/components/MenuInferior';
+import BotaoFavorito from '../../components/BotaoFavorito';
+import { useFavoritos } from '../../hooks/useFavoritos';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { router } from 'expo-router';
@@ -151,10 +153,39 @@ function blocosLegados(data: Record<string, any>): BlocoEvento[] {
 export default function EventosScreen() {
   const { role } = useAuth();
 
+  const {
+    favoritos,
+    alternarFavorito,
+    usuarioLogado,
+    estaAtualizando,
+  } = useFavoritos();
+
   const [evento, setEvento] = useState<Evento>(eventoPadrao);
   const [rascunho, setRascunho] = useState<Evento>(eventoPadrao);
   const [editando, setEditando] = useState(false);
   const [salvando, setSalvando] = useState(false);
+
+  const eventoFavoritado = favoritos.eventos.includes('atm');
+
+  async function handleFavorito() {
+    if (!usuarioLogado) {
+      Alert.alert(
+        'Entre na sua conta',
+        'Faça login para salvar este evento nos seus favoritos.',
+        [
+          { text: 'Agora não', style: 'cancel' },
+          {
+            text: 'Entrar',
+            onPress: () => router.push('/login'),
+          },
+        ],
+      );
+
+      return;
+    }
+
+    await alternarFavorito('eventos', 'atm');
+  }
 
   useEffect(() => {
     return onSnapshot(doc(db, 'events', 'atm'), (snapshot) => {
@@ -305,6 +336,25 @@ export default function EventosScreen() {
               : evento.subtitle}
           </Text>
         </View>
+
+        {!editando && (
+          <View style={styles.favoriteEventCard}>
+            <View style={styles.favoriteEventInfo}>
+              <Text style={styles.favoriteEventTitle}>
+                Abertura da Temporada de Montanhismo
+              </Text>
+              <Text style={styles.favoriteEventSubtitle}>
+                Salve este evento para encontrá-lo facilmente no seu perfil.
+              </Text>
+            </View>
+
+            <BotaoFavorito
+              salvo={eventoFavoritado}
+              onPress={handleFavorito}
+              disabled={estaAtualizando('eventos', 'atm')}
+            />
+          </View>
+        )}
 
         {role === 'admin' && (
           <View style={styles.adminPanel}>
@@ -629,6 +679,31 @@ const styles = StyleSheet.create({
     color: COLORS.muted,
     fontSize: 15,
     lineHeight: 23,
+  },
+  favoriteEventCard: {
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 17,
+    padding: 15,
+    marginBottom: 22,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  favoriteEventInfo: {
+    flex: 1,
+  },
+  favoriteEventTitle: {
+    color: COLORS.darkGreen,
+    fontSize: 14,
+    fontWeight: '800',
+    marginBottom: 5,
+  },
+  favoriteEventSubtitle: {
+    color: COLORS.muted,
+    fontSize: 12,
+    lineHeight: 18,
   },
   adminPanel: {
     backgroundColor: COLORS.white,

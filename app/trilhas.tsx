@@ -1,5 +1,6 @@
 
 import { router } from 'expo-router';
+import { Alert } from 'react-native';
 import {
   ImageBackground,
   Pressable,
@@ -12,6 +13,8 @@ import {
 
 import { UserAccountBar } from '@/components/UserAccountBar';
 import MenuInferior from '@/components/MenuInferior';
+import BotaoFavorito from '@/components/BotaoFavorito';
+import { useFavoritos } from '@/hooks/useFavoritos';
 
 const COLORS = {
   background: '#f8f4f0',
@@ -70,17 +73,21 @@ const TRAILS: Trail[] = [
   },
 ];
 
-function TrailCard({ trail }: { trail: Trail }) {
+type TrailCardProps = {
+  trail: Trail;
+  favorito: boolean;
+  onFavoritoPress: () => void;
+  favoritoCarregando: boolean;
+};
+
+function TrailCard({
+  trail,
+  favorito,
+  onFavoritoPress,
+  favoritoCarregando,
+}: TrailCardProps) {
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Conhecer a trilha ${trail.name}`}
-      onPress={() => router.push(trail.route)}
-      style={({ pressed }) => [
-        styles.trailCard,
-        pressed && styles.cardPressed,
-      ]}
-    >
+    <View style={styles.trailCard}>
       <ImageBackground
         source={{ uri: trail.image }}
         style={styles.trailImage}
@@ -89,21 +96,43 @@ function TrailCard({ trail }: { trail: Trail }) {
       >
         <View style={styles.imageShade} />
 
-        <View style={styles.difficultyBadge}>
-          <Text style={styles.difficultyText}>
-            {trail.difficulty}
-          </Text>
-        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Conhecer a trilha ${trail.name}`}
+          onPress={() => router.push(trail.route)}
+          style={styles.imagePressable}
+        >
+          <View style={styles.difficultyBadge}>
+            <Text style={styles.difficultyText}>
+              {trail.difficulty}
+            </Text>
+          </View>
 
-        <View style={styles.imageContent}>
-          <Text style={styles.trailName}>{trail.name}</Text>
-          <Text style={styles.trailLocation}>
-            {trail.location}
-          </Text>
+          <View style={styles.imageContent}>
+            <Text style={styles.trailName}>{trail.name}</Text>
+            <Text style={styles.trailLocation}>
+              {trail.location}
+            </Text>
+          </View>
+        </Pressable>
+
+        <View style={styles.favoritePosition}>
+          <BotaoFavorito
+            salvo={favorito}
+            onPress={onFavoritoPress}
+            disabled={favoritoCarregando}
+          />
         </View>
       </ImageBackground>
 
-      <View style={styles.cardContent}>
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => router.push(trail.route)}
+        style={({ pressed }) => [
+          styles.cardContent,
+          pressed && styles.cardContentPressed,
+        ]}
+      >
         <Text style={styles.trailDescription}>
           {trail.description}
         </Text>
@@ -117,12 +146,39 @@ function TrailCard({ trail }: { trail: Trail }) {
             <Text style={styles.arrow}>›</Text>
           </View>
         </View>
-      </View>
-    </Pressable>
+      </Pressable>
+    </View>
   );
 }
 
 export default function TrilhasScreen() {
+  const {
+    favoritos,
+    alternarFavorito,
+    usuarioLogado,
+    estaAtualizando,
+  } = useFavoritos();
+
+  async function handleFavorito(id: string) {
+    if (!usuarioLogado) {
+      Alert.alert(
+        'Entre na sua conta',
+        'Faça login para salvar suas trilhas favoritas.',
+        [
+          { text: 'Agora não', style: 'cancel' },
+          {
+            text: 'Entrar',
+            onPress: () => router.push('/login'),
+          },
+        ],
+      );
+
+      return;
+    }
+
+    await alternarFavorito('trilhas', id);
+  }
+
   return (
     <View style={styles.screen}>
       <StatusBar
@@ -222,7 +278,16 @@ export default function TrilhasScreen() {
 
         <View style={styles.trailsList}>
           {TRAILS.map((trail) => (
-            <TrailCard key={trail.id} trail={trail} />
+            <TrailCard
+              key={trail.id}
+              trail={trail}
+              favorito={favoritos.trilhas.includes(trail.id)}
+              onFavoritoPress={() => handleFavorito(trail.id)}
+              favoritoCarregando={estaAtualizando(
+                'trilhas',
+                trail.id,
+              )}
+            />
           ))}
         </View>
 
@@ -449,11 +514,6 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
 
-  cardPressed: {
-    opacity: 0.88,
-    transform: [{ scale: 0.99 }],
-  },
-
   trailImage: {
     height: 190,
     justifyContent: 'space-between',
@@ -468,6 +528,18 @@ const styles = StyleSheet.create({
   imageShade: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(13, 30, 16, 0.30)',
+  },
+
+  imagePressable: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+
+  favoritePosition: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    zIndex: 5,
   },
 
   difficultyBadge: {
@@ -511,6 +583,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 13,
     paddingBottom: 15,
+  },
+
+  cardContentPressed: {
+    opacity: 0.85,
   },
 
   trailDescription: {
@@ -597,52 +673,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     marginTop: 25,
     marginBottom: 4,
-  },
-
-  bottomNavigation: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    backgroundColor: COLORS.white,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    paddingTop: 9,
-    paddingBottom: 10,
-    minHeight: 66,
-  },
-
-  navItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 45,
-  },
-
-  navIcon: {
-    color: '#7C877B',
-    fontSize: 19,
-    fontWeight: '700',
-    marginBottom: 3,
-  },
-
-  navLabel: {
-    color: '#7C877B',
-    fontSize: 10,
-    fontWeight: '600',
-  },
-
-  activeNavText: {
-    color: COLORS.green,
-    fontWeight: '800',
-  },
-
-  activeIndicator: {
-    position: 'absolute',
-    top: -9,
-    width: 24,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: COLORS.brightGreen,
   },
 
   buttonPressed: {

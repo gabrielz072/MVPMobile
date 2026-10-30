@@ -11,7 +11,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+
 import { useAuth } from '@/contexts/AuthContext';
+import { useFavoritos } from '@/hooks/useFavoritos';
 
 const VERDE = '#1A481F';
 const VERDE_MEDIO = '#246D2C';
@@ -24,6 +26,7 @@ const CAPA =
 
 export default function PerfilScreen() {
   const { user } = useAuth();
+  const { favoritos, carregando } = useFavoritos();
 
   const nome =
     user?.displayName ||
@@ -32,25 +35,10 @@ export default function PerfilScreen() {
 
   const inicial = nome.charAt(0).toUpperCase();
 
-  function abrirLogin() {
-    router.push('/login');
-  }
-
-  function abrirCadastro() {
-    router.push('/cadastro');
-  }
-
-  function abrirTrilhas() {
-    router.push('/trilhas');
-  }
-
-  function abrirNatureza() {
-    router.push('/natureza');
-  }
-
-  function abrirEventos() {
-    router.push('/eventos');
-  }
+  const totalFavoritos =
+    favoritos.trilhas.length +
+    favoritos.natureza.length +
+    favoritos.eventos.length;
 
   return (
     <View style={styles.container}>
@@ -60,7 +48,7 @@ export default function PerfilScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scroll}
       >
-        {/* CAPA IMERSIVA */}
+        {/* CAPA */}
         <ImageBackground
           source={{ uri: CAPA }}
           style={styles.capa}
@@ -79,7 +67,9 @@ export default function PerfilScreen() {
 
           <View style={styles.textoCapa}>
             <Text style={styles.fraseCapa}>
-              A natureza espera{'\n'}por você.
+              A natureza espera{' '}
+              {'\n'}
+              por você.
             </Text>
             <Text style={styles.descricaoCapa}>
               Descubra, explore e viva Teresópolis.
@@ -87,11 +77,7 @@ export default function PerfilScreen() {
           </View>
 
           <View style={styles.indicadorCapa}>
-            <Ionicons
-              name="leaf-outline"
-              size={17}
-              color="#FFFFFF"
-            />
+            <Ionicons name="leaf-outline" size={17} color="#FFFFFF" />
             <Text style={styles.textoIndicador}>
               SERRA DOS ÓRGÃOS
             </Text>
@@ -100,7 +86,6 @@ export default function PerfilScreen() {
 
         {/* CONTEÚDO */}
         <View style={styles.conteudo}>
-
           {/* PERFIL */}
           <View style={styles.cartaoPerfil}>
             <View style={styles.avatar}>
@@ -146,13 +131,14 @@ export default function PerfilScreen() {
                   Faça parte dessa experiência
                 </Text>
                 <Text style={styles.acessoDescricao}>
-                  Acesse sua conta e aproveite o Circuito Terê Verde.
+                  Acesse sua conta para salvar seus lugares favoritos
+                  e aproveitar o Circuito Terê Verde.
                 </Text>
               </View>
 
               <TouchableOpacity
                 style={styles.botaoEntrar}
-                onPress={abrirLogin}
+                onPress={() => router.push('/login')}
                 activeOpacity={0.85}
               >
                 <Text style={styles.botaoEntrarTexto}>
@@ -166,7 +152,7 @@ export default function PerfilScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={abrirCadastro}
+                onPress={() => router.push('/cadastro')}
                 style={styles.botaoCadastro}
               >
                 <Text style={styles.botaoCadastroTexto}>
@@ -176,79 +162,77 @@ export default function PerfilScreen() {
             </View>
           )}
 
-          {/* MINHA JORNADA */}
+          {/* SEUS FAVORITOS */}
           <View style={styles.secao}>
             <View style={styles.tituloSecao}>
               <View>
-                <Text style={styles.miniTitulo}>DESCUBRA TERESÓPOLIS</Text>
+                <Text style={styles.miniTitulo}>
+                  SUA COLEÇÃO PESSOAL
+                </Text>
                 <Text style={styles.titulo}>
-                  Sua jornada
+                  Seus favoritos
                 </Text>
               </View>
 
-              <Ionicons
-                name="compass-outline"
-                size={28}
-                color={VERDE}
-              />
+              <Ionicons name="heart" size={27} color="#D94B50" />
             </View>
 
+            <Text style={styles.introducaoFavoritos}>
+              Guarde os lugares e experiências que deseja conhecer
+              em Teresópolis.
+            </Text>
+
+            {/* ACESSO À PÁGINA EXCLUSIVA DE FAVORITOS */}
             <TouchableOpacity
               style={styles.opcao}
-              onPress={abrirTrilhas}
+              onPress={() => router.push('/favoritos')}
               activeOpacity={0.8}
             >
-              <View style={[styles.iconeOpcao, { backgroundColor: '#E4EDE1' }]}>
-                <Ionicons name="trail-sign-outline" size={23} color={VERDE} />
+              <View style={styles.iconeFavoritos}>
+                <Ionicons
+                  name="heart"
+                  size={24}
+                  color="#D94B50"
+                />
               </View>
 
               <View style={styles.textoOpcao}>
-                <Text style={styles.nomeOpcao}>Trilhas e destinos</Text>
+                <Text style={styles.nomeOpcao}>
+                  Ver meus favoritos
+                </Text>
+
                 <Text style={styles.descOpcao}>
-                  Explore caminhos e paisagens incríveis
+                  {!user
+                    ? 'Entre para salvar e acessar seus favoritos'
+                    : carregando
+                      ? 'Carregando seus favoritos...'
+                      : totalFavoritos === 0
+                        ? 'Você ainda não salvou nenhum item'
+                        : `${totalFavoritos} ${totalFavoritos === 1 ? 'item salvo' : 'itens salvos'} na sua coleção`}
                 </Text>
               </View>
 
-              <Ionicons name="chevron-forward" size={20} color={CINZA} />
+              {user && !carregando && (
+                <View style={styles.contador}>
+                  <Text style={styles.contadorTexto}>
+                    {totalFavoritos}
+                  </Text>
+                </View>
+              )}
+
+              <Ionicons
+                name="chevron-forward"
+                size={21}
+                color={CINZA}
+              />
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.opcao}
-              onPress={abrirNatureza}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.iconeOpcao, { backgroundColor: '#E9EFE5' }]}>
-                <Ionicons name="leaf-outline" size={23} color={VERDE} />
-              </View>
-
-              <View style={styles.textoOpcao}>
-                <Text style={styles.nomeOpcao}>Natureza</Text>
-                <Text style={styles.descOpcao}>
-                  Conheça as belezas naturais da região
-                </Text>
-              </View>
-
-              <Ionicons name="chevron-forward" size={20} color={CINZA} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.opcao}
-              onPress={abrirEventos}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.iconeOpcao, { backgroundColor: '#F1EBDD' }]}>
-                <Ionicons name="calendar-outline" size={23} color="#8A6935" />
-              </View>
-
-              <View style={styles.textoOpcao}>
-                <Text style={styles.nomeOpcao}>Eventos</Text>
-                <Text style={styles.descOpcao}>
-                  Descubra o que acontece em Teresópolis
-                </Text>
-              </View>
-
-              <Ionicons name="chevron-forward" size={20} color={CINZA} />
-            </TouchableOpacity>
+            {!user && (
+              <Text style={styles.avisoFavoritos}>
+                Entre na sua conta para manter seus favoritos salvos
+                e acessá-los quando quiser.
+              </Text>
+            )}
           </View>
 
           {/* FRASE INSTITUCIONAL */}
@@ -457,7 +441,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 15,
+    marginBottom: 10,
   },
   miniTitulo: {
     color: VERDE_MEDIO,
@@ -471,6 +455,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 3,
   },
+  introducaoFavoritos: {
+    color: CINZA,
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 15,
+  },
   opcao: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -479,10 +469,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  iconeOpcao: {
+  iconeFavoritos: {
     width: 46,
     height: 46,
     borderRadius: 14,
+    backgroundColor: '#F9E8E8',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -500,6 +491,29 @@ const styles = StyleSheet.create({
     color: CINZA,
     fontSize: 11,
     marginTop: 5,
+  },
+  contador: {
+    minWidth: 27,
+    height: 27,
+    paddingHorizontal: 7,
+    borderRadius: 14,
+    backgroundColor: '#F0F3ED',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  contadorTexto: {
+    color: VERDE,
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  avisoFavoritos: {
+    color: CINZA,
+    fontSize: 11,
+    lineHeight: 17,
+    textAlign: 'center',
+    marginTop: 5,
+    paddingHorizontal: 15,
   },
   fraseFinal: {
     backgroundColor: VERDE,

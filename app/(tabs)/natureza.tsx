@@ -1,8 +1,12 @@
 
+import { useState } from 'react';
 import { UserAccountBar } from '@/components/UserAccountBar';
 import MenuInferior from '@/components/MenuInferior';
+import BotaoFavorito from '@/components/BotaoFavorito';
+import { useFavoritos } from '@/hooks/useFavoritos';
 import { router } from 'expo-router';
 import {
+  Alert,
   ImageBackground,
   Pressable,
   ScrollView,
@@ -28,6 +32,33 @@ const imagemNatureza =
   'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1400&q=85';
 
 export default function NaturezaScreen() {
+  const {
+    favoritos,
+    alternarFavorito,
+    usuarioLogado,
+    estaAtualizando,
+  } = useFavoritos();
+
+  async function handleFavorito(id: string) {
+    if (!usuarioLogado) {
+      Alert.alert(
+        'Entre na sua conta',
+        'Faça login para salvar seus conteúdos favoritos.',
+        [
+          { text: 'Agora não', style: 'cancel' },
+          {
+            text: 'Entrar',
+            onPress: () => router.push('/login'),
+          },
+        ],
+      );
+
+      return;
+    }
+
+    await alternarFavorito('natureza', id);
+  }
+
   return (
     <View style={styles.screen}>
       <StatusBar
@@ -108,6 +139,7 @@ export default function NaturezaScreen() {
             <View style={styles.cardIcon}>
               <Text style={styles.cardEmoji}>🌳</Text>
             </View>
+
             <View style={styles.cardHeadingText}>
               <Text style={styles.cardTitle}>
                 Biodiversidade da Mata Atlântica
@@ -116,6 +148,12 @@ export default function NaturezaScreen() {
                 FLORESTAS E VIDA SILVESTRE
               </Text>
             </View>
+
+            <BotaoFavorito
+              salvo={favoritos.natureza.includes('mata-atlantica')}
+              onPress={() => handleFavorito('mata-atlantica')}
+              disabled={estaAtualizando('natureza', 'mata-atlantica')}
+            />
           </View>
 
           <Text style={styles.cardText}>
@@ -158,6 +196,7 @@ export default function NaturezaScreen() {
             <View style={styles.cardIcon}>
               <Text style={styles.cardEmoji}>🥾</Text>
             </View>
+
             <View style={styles.cardHeadingText}>
               <Text style={styles.cardTitle}>
                 A Capital Nacional do Montanhismo
@@ -166,6 +205,12 @@ export default function NaturezaScreen() {
                 AVENTURA E EXPLORAÇÃO
               </Text>
             </View>
+
+            <BotaoFavorito
+              salvo={favoritos.natureza.includes('montanhismo')}
+              onPress={() => handleFavorito('montanhismo')}
+              disabled={estaAtualizando('natureza', 'montanhismo')}
+            />
           </View>
 
           <Text style={styles.cardText}>
