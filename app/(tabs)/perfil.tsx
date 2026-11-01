@@ -1,13 +1,20 @@
 
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React from 'react';
+import * as ImagePicker from 'expo-image-picker';
+import React, { useState } from 'react';
+
 import {
+  ActivityIndicator,
+  Alert,
+  Image,
   ImageBackground,
+  Modal,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -25,10 +32,16 @@ const CAPA =
   'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1200';
 
 export default function PerfilScreen() {
-  const { user } = useAuth();
+  const { user, userName, photoURL, updateUserProfile } = useAuth();
   const { favoritos, carregando } = useFavoritos();
 
+  const [modalEdicao, setModalEdicao] = useState(false);
+  const [nomeEditado, setNomeEditado] = useState('');
+  const [fotoSelecionada, setFotoSelecionada] = useState<string | null>(null);
+  const [salvando, setSalvando] = useState(false);
+
   const nome =
+    userName ||
     user?.displayName ||
     user?.email?.split('@')[0] ||
     'Explorador da natureza';
@@ -39,6 +52,74 @@ export default function PerfilScreen() {
     favoritos.trilhas.length +
     favoritos.natureza.length +
     favoritos.eventos.length;
+
+  function abrirEdicao() {
+    setNomeEditado(nome);
+    setFotoSelecionada(null);
+    setModalEdicao(true);
+  }
+
+  async function escolherFoto() {
+    try {
+      const permissao =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permissao.granted) {
+        Alert.alert(
+          'Permissão necessária',
+          'Precisamos de acesso à galeria para você escolher uma foto.'
+        );
+        return;
+      }
+
+      const resultado = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!resultado.canceled && resultado.assets.length > 0) {
+        setFotoSelecionada(resultado.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Erro ao selecionar foto:', error);
+      Alert.alert('Erro', 'Não foi possível abrir a galeria.');
+    }
+  }
+
+  async function salvarPerfil() {
+    if (!nomeEditado.trim()) {
+      Alert.alert('Atenção', 'Digite seu nome antes de salvar.');
+      return;
+    }
+
+    try {
+      setSalvando(true);
+
+      await updateUserProfile(
+        nomeEditado.trim(),
+        fotoSelecionada || undefined
+      );
+
+      setModalEdicao(false);
+      setFotoSelecionada(null);
+
+      Alert.alert(
+        'Perfil atualizado!',
+        'Suas informações foram salvas com sucesso.'
+      );
+    } catch (error) {
+      console.error('Erro ao atualizar perfil:', error);
+
+      Alert.alert(
+        'Não foi possível salvar',
+        'Ocorreu um erro ao atualizar seu perfil. Verifique sua conexão e tente novamente.'
+      );
+    } finally {
+      setSalvando(false);
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -89,11 +170,10 @@ export default function PerfilScreen() {
           {/* PERFIL */}
           <View style={styles.cartaoPerfil}>
             <View style={styles.avatar}>
-              {user?.photoURL ? (
-                <ImageBackground
-                  source={{ uri: user.photoURL }}
+              {photoURL ? (
+                <Image
+                  source={{ uri: photoURL }}
                   style={styles.avatarImagem}
-                  imageStyle={styles.avatarImagemBorda}
                 />
               ) : (
                 <Text style={styles.avatarTexto}>
@@ -116,11 +196,20 @@ export default function PerfilScreen() {
               </Text>
             </View>
 
-            <Ionicons
-              name="person-circle-outline"
-              size={25}
-              color={VERDE_MEDIO}
-            />
+            {user && (
+              <TouchableOpacity
+                style={styles.botaoEditar}
+                onPress={abrirEdicao}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name="create-outline"
+                  size={21}
+                  color={VERDE_MEDIO}
+                />
+                <Text style={styles.textoBotaoEditar}>Editar</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* ACESSO À CONTA */}
@@ -182,7 +271,6 @@ export default function PerfilScreen() {
               em Teresópolis.
             </Text>
 
-            {/* ACESSO À PÁGINA EXCLUSIVA DE FAVORITOS */}
             <TouchableOpacity
               style={styles.opcao}
               onPress={() => router.push('/favoritos')}
@@ -251,6 +339,150 @@ export default function PerfilScreen() {
           </Text>
         </View>
       </ScrollView>
+
+      {/* MODAL DE EDIÇÃO DO PERFIL */}
+      <Modal
+        visible={modalEdicao}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          if (!salvando) setModalEdicao(false);
+        }}
+      >
+        <View style={styles.fundoModal}>
+          <View style={styles.modal}>
+            <View style={styles.topoModal}>
+              <View>
+                <Text style={styles.tituloModal}>Editar perfil</Text>
+                <Text style={styles.subtituloModal}>
+                  Atualize suas informações pessoais
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => setModalEdicao(false)}
+                disabled={salvando}
+                style={styles.fecharModal}
+              >
+                <Ionicons name="close" size={23} color={VERDE} />
+              </TouchableOpacity>
+            </View>
+
+            {/* FOTO */}
+            <TouchableOpacity
+              style={styles.areaFoto}
+              onPress={escolherFoto}
+              disabled={salvando}
+              activeOpacity={0.8}
+            >
+              <View style={styles.avatarEdicao}>
+                {fotoSelecionada || photoURL ? (
+                  <Image
+                    source={{
+                      uri: fotoSelecionada || photoURL || '',
+                    }}
+                    style={styles.imagemEdicao}
+                  />
+                ) : (
+                  <Text style={styles.avatarTextoEdicao}>
+                    {nomeEditado.charAt(0).toUpperCase() || '?'}
+                  </Text>
+                )}
+
+                <View style={styles.iconeCamera}>
+                  <Ionicons
+                    name="camera"
+                    size={17}
+                    color="#FFFFFF"
+                  />
+                </View>
+              </View>
+
+              <Text style={styles.textoAlterarFoto}>
+                Alterar foto de perfil
+              </Text>
+              <Text style={styles.dicaFoto}>
+                Escolha uma imagem da sua galeria
+              </Text>
+            </TouchableOpacity>
+
+            {/* NOME */}
+            <Text style={styles.labelCampo}>Nome de exibição</Text>
+
+            <View style={styles.campoNome}>
+              <Ionicons
+                name="person-outline"
+                size={19}
+                color={VERDE_MEDIO}
+              />
+
+              <TextInput
+                style={styles.inputNome}
+                value={nomeEditado}
+                onChangeText={setNomeEditado}
+                placeholder="Digite seu nome"
+                placeholderTextColor="#999999"
+                maxLength={60}
+                editable={!salvando}
+                autoCapitalize="words"
+                returnKeyType="done"
+              />
+            </View>
+
+            {/* E-MAIL */}
+            <Text style={styles.labelCampo}>E-mail da conta</Text>
+
+            <View style={[styles.campoNome, styles.campoDesabilitado]}>
+              <Ionicons
+                name="mail-outline"
+                size={19}
+                color={CINZA}
+              />
+              <Text style={styles.emailModal}>
+                {user?.email || ''}
+              </Text>
+            </View>
+
+            <Text style={styles.avisoEmail}>
+              O e-mail não pode ser alterado nesta tela.
+            </Text>
+
+            {/* BOTÕES */}
+            <TouchableOpacity
+              style={[
+                styles.botaoSalvar,
+                salvando && styles.botaoDesabilitado,
+              ]}
+              onPress={salvarPerfil}
+              disabled={salvando}
+              activeOpacity={0.85}
+            >
+              {salvando ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <>
+                  <Ionicons
+                    name="checkmark-circle-outline"
+                    size={20}
+                    color="#FFFFFF"
+                  />
+                  <Text style={styles.textoSalvar}>
+                    Salvar alterações
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.botaoCancelar}
+              onPress={() => setModalEdicao(false)}
+              disabled={salvando}
+            >
+              <Text style={styles.textoCancelar}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -359,8 +591,6 @@ const styles = StyleSheet.create({
   avatarImagem: {
     width: '100%',
     height: '100%',
-  },
-  avatarImagemBorda: {
     borderRadius: 30,
   },
   avatarTexto: {
@@ -389,6 +619,17 @@ const styles = StyleSheet.create({
     color: CINZA,
     fontSize: 11,
     marginTop: 4,
+  },
+  botaoEditar: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingLeft: 5,
+  },
+  textoBotaoEditar: {
+    color: VERDE_MEDIO,
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginTop: 2,
   },
   acessoConta: {
     backgroundColor: '#FFFFFF',
@@ -542,5 +783,156 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     textAlign: 'center',
     marginTop: 22,
+  },
+
+  // MODAL DE EDIÇÃO
+  fundoModal: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modal: {
+    width: '100%',
+    maxWidth: 430,
+    backgroundColor: FUNDO,
+    borderRadius: 22,
+    padding: 22,
+  },
+  topoModal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  tituloModal: {
+    color: VERDE,
+    fontSize: 23,
+    fontWeight: 'bold',
+  },
+  subtituloModal: {
+    color: CINZA,
+    fontSize: 12,
+    marginTop: 5,
+  },
+  fecharModal: {
+    width: 35,
+    height: 35,
+    borderRadius: 18,
+    backgroundColor: '#E8EDE5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  areaFoto: {
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 25,
+  },
+  avatarEdicao: {
+    width: 105,
+    height: 105,
+    borderRadius: 55,
+    backgroundColor: '#E5EDE2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  imagemEdicao: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarTextoEdicao: {
+    fontSize: 42,
+    fontWeight: 'bold',
+    color: VERDE,
+  },
+  iconeCamera: {
+    position: 'absolute',
+    right: 2,
+    bottom: 2,
+    width: 31,
+    height: 31,
+    borderRadius: 17,
+    backgroundColor: VERDE_MEDIO,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: FUNDO,
+  },
+  textoAlterarFoto: {
+    color: VERDE_MEDIO,
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginTop: 11,
+  },
+  dicaFoto: {
+    color: CINZA,
+    fontSize: 11,
+    marginTop: 4,
+  },
+  labelCampo: {
+    color: TEXTO,
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    marginTop: 13,
+  },
+  campoNome: {
+    height: 49,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E1E7DE',
+    paddingHorizontal: 13,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  inputNome: {
+    flex: 1,
+    color: TEXTO,
+    fontSize: 14,
+    height: '100%',
+  },
+  campoDesabilitado: {
+    backgroundColor: '#EEF0EC',
+  },
+  emailModal: {
+    flex: 1,
+    color: CINZA,
+    fontSize: 13,
+  },
+  avisoEmail: {
+    color: CINZA,
+    fontSize: 10,
+    marginTop: 6,
+  },
+  botaoSalvar: {
+    backgroundColor: VERDE,
+    borderRadius: 12,
+    minHeight: 49,
+    marginTop: 25,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 9,
+  },
+  botaoDesabilitado: {
+    opacity: 0.7,
+  },
+  textoSalvar: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  botaoCancelar: {
+    alignItems: 'center',
+    paddingVertical: 14,
+  },
+  textoCancelar: {
+    color: CINZA,
+    fontSize: 13,
+    fontWeight: '600',
   },
 });
