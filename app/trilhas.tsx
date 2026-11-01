@@ -1,6 +1,6 @@
-
 import { router } from 'expo-router';
 import { Alert } from 'react-native';
+import MenuInferior from '@/components/MenuInferior';
 import {
   ImageBackground,
   Pressable,
@@ -11,8 +11,6 @@ import {
   View,
 } from 'react-native';
 
-import { UserAccountBar } from '@/components/UserAccountBar';
-import MenuInferior from '@/components/MenuInferior';
 import BotaoFavorito from '@/components/BotaoFavorito';
 import { useFavoritos } from '@/hooks/useFavoritos';
 
@@ -186,10 +184,6 @@ export default function TrilhasScreen() {
         backgroundColor={COLORS.background}
       />
 
-      <View style={styles.topBar}>
-        <UserAccountBar />
-      </View>
-
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -311,8 +305,7 @@ export default function TrilhasScreen() {
           CIRCUITO TERÊ VERDE · CONECTE-SE À NATUREZA
         </Text>
       </ScrollView>
-
-      <MenuInferior />
+       <MenuInferior />
     </View>
   );
 }
@@ -323,21 +316,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
 
-  topBar: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 4,
-    backgroundColor: COLORS.background,
-    zIndex: 2,
-  },
-
   scrollView: {
     flex: 1,
   },
 
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 18,
+    paddingTop: 55,
     paddingBottom: 110,
   },
 

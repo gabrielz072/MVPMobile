@@ -1,10 +1,10 @@
-
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
+import { useAuth } from '@/contexts/AuthContext';
 
 const VERDE = '#246D2C';
 const CINZA = '#879087';
@@ -28,6 +28,8 @@ function IconeAba({
 }
 
 export default function TabLayout() {
+  const { user } = useAuth();
+
   return (
     <Tabs
       screenOptions={{
@@ -37,7 +39,16 @@ export default function TabLayout() {
         tabBarInactiveTintColor: CINZA,
         tabBarShowLabel: true,
         tabBarLabelStyle: styles.label,
-        tabBarStyle: styles.menu,
+        tabBarStyle: user
+  ? styles.menu
+  : {
+      display: 'none',
+      height: 0,
+      minHeight: 0,
+      padding: 0,
+      borderTopWidth: 0,
+      elevation: 0,
+    },
         tabBarItemStyle: styles.item,
         tabBarBackground: () => <View style={styles.fundo} />,
       }}
@@ -71,32 +82,32 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-  name="natureza"
-  options={{
-    title: 'Natureza',
-    tabBarIcon: ({ color, focused }) => (
-      <IconeAba
-        name={focused ? 'leaf' : 'leaf-outline'}
-        color={color}
-        focused={focused}
+        name="natureza"
+        options={{
+          title: 'Natureza',
+          tabBarIcon: ({ color, focused }) => (
+            <IconeAba
+              name={focused ? 'leaf' : 'leaf-outline'}
+              color={color}
+              focused={focused}
+            />
+          ),
+        }}
       />
-    ),
-  }}
-/>
 
       <Tabs.Screen
-  name="eventos"
-  options={{
-    title: 'Eventos',
-    tabBarIcon: ({ color, focused }) => (
-      <IconeAba
-        name={focused ? 'calendar' : 'calendar-outline'}
-        color={color}
-        focused={focused}
+        name="eventos"
+        options={{
+          title: 'Eventos',
+          tabBarIcon: ({ color, focused }) => (
+            <IconeAba
+              name={focused ? 'calendar' : 'calendar-outline'}
+              color={color}
+              focused={focused}
+            />
+          ),
+        }}
       />
-    ),
-  }}
-/>
 
       <Tabs.Screen
         name="perfil"

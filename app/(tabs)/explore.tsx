@@ -1,5 +1,3 @@
-
-import { UserAccountBar } from '@/components/UserAccountBar';
 import { router } from 'expo-router';
 import {
   ImageBackground,
@@ -9,17 +7,15 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native';
 
 const COLORS = {
   background: '#f8f4f0',
   darkGreen: '#1A481F',
-  mediumGreen: '#246D2C',
   green: '#2F8F3A',
   white: '#FFFFFF',
-  text: '#263529',
   muted: '#777D75',
-  border: '#E5E8DF',
 };
 
 const categories = [
@@ -50,6 +46,15 @@ const categories = [
 ];
 
 export default function ExploreScreen() {
+  const { width, height } = useWindowDimensions();
+
+  const isSmallScreen = width < 380;
+  const isTablet = width >= 700;
+
+  const horizontalPadding = isSmallScreen ? 16 : isTablet ? 32 : 24;
+  const heroHeight = Math.min(290, Math.max(190, height * 0.31));
+  const categoryHeight = isTablet ? 220 : isSmallScreen ? 165 : 185;
+
   return (
     <View style={styles.screen}>
       <StatusBar
@@ -57,198 +62,157 @@ export default function ExploreScreen() {
         backgroundColor={COLORS.background}
       />
 
-      <UserAccountBar />
-
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingHorizontal: horizontalPadding,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.heading}>
-          <Text style={styles.eyebrow}>CIRCUITO TERÊ VERDE</Text>
+        <View style={styles.container}>
+          <View style={styles.heading}>
+            <Text style={styles.eyebrow}>
+              CIRCUITO TERÊ VERDE
+            </Text>
 
-          <Text style={styles.title}>Onde ir?</Text>
+            <Text
+              style={[
+                styles.title,
+                { fontSize: isSmallScreen ? 28 : 32 },
+              ]}
+            >
+              Onde ir?
+            </Text>
 
-          <Text style={styles.subtitle}>
-            Explore Teresópolis e descubra experiências
-            inesquecíveis em meio à natureza.
-          </Text>
-        </View>
+            <Text style={styles.subtitle}>
+              Explore Teresópolis e descubra experiências
+              inesquecíveis em meio à natureza.
+            </Text>
+          </View>
 
-        <Pressable
-          style={styles.heroCard}
-          onPress={() => router.push('/trilhas')}
-        >
-          <ImageBackground
-            source={{
-              uri: 'https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=1400&q=85',
-            }}
-            style={styles.heroImage}
-            imageStyle={styles.heroImageRadius}
+          <Pressable
+            style={styles.heroCard}
+            onPress={() => router.push('/trilhas')}
           >
-            <View style={styles.heroOverlay} />
+            <ImageBackground
+              source={{
+                uri: 'https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=1400&q=85',
+              }}
+              style={[
+                styles.heroImage,
+                { height: heroHeight },
+              ]}
+              imageStyle={styles.heroImageRadius}
+            >
+              <View style={styles.heroOverlay} />
 
-            <View style={styles.heroContent}>
-              <View style={styles.heroTag}>
-                <Text style={styles.heroTagText}>
-                  DESCUBRA TERÊ
+              <View style={styles.heroContent}>
+                <View style={styles.heroTag}>
+                  <Text style={styles.heroTagText}>
+                    DESCUBRA TERÊ
+                  </Text>
+                </View>
+
+                <Text
+                  style={[
+                    styles.heroTitle,
+                    { fontSize: isSmallScreen ? 23 : 27 },
+                  ]}
+                >
+                  A natureza está chamando
                 </Text>
-              </View>
 
-              <Text style={styles.heroTitle}>
-                A natureza está chamando
-              </Text>
-
-              <Text style={styles.heroDescription}>
-                Seu próximo destino começa aqui.
-              </Text>
-
-              <View style={styles.heroButton}>
-                <Text style={styles.heroButtonText}>
-                  Explorar trilhas
+                <Text style={styles.heroDescription}>
+                  Seu próximo destino começa aqui.
                 </Text>
-                <Text style={styles.heroArrow}>→</Text>
-              </View>
-            </View>
-          </ImageBackground>
-        </Pressable>
 
-        <View style={styles.sectionHeader}>
-          <View>
+                <View style={styles.heroButton}>
+                  <Text style={styles.heroButtonText}>
+                    Explorar trilhas
+                  </Text>
+                  <Text style={styles.heroArrow}>→</Text>
+                </View>
+              </View>
+            </ImageBackground>
+          </Pressable>
+
+          <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>
               Explore por categoria
             </Text>
+
             <Text style={styles.sectionSubtitle}>
               Escolha sua próxima experiência
             </Text>
           </View>
-        </View>
 
-        <View style={styles.categoryList}>
-          {categories.map((category) => (
-            <Pressable
-              key={category.title}
-              style={({ pressed }) => [
-                styles.categoryCard,
-                pressed && styles.cardPressed,
-              ]}
-              onPress={() => router.push(category.route)}
-            >
-              <ImageBackground
-                source={{ uri: category.image }}
-                style={styles.categoryImage}
-                imageStyle={styles.categoryImageRadius}
+          <View
+            style={[
+              styles.categoryList,
+              isTablet && styles.categoryListTablet,
+            ]}
+          >
+            {categories.map((category) => (
+              <Pressable
+                key={category.title}
+                style={({ pressed }) => [
+                  styles.categoryCard,
+                  isTablet && styles.categoryCardTablet,
+                  pressed && styles.cardPressed,
+                ]}
+                onPress={() => router.push(category.route)}
               >
-                <View style={styles.categoryImageOverlay} />
+                <ImageBackground
+                  source={{ uri: category.image }}
+                  style={[
+                    styles.categoryImage,
+                    { height: categoryHeight },
+                  ]}
+                  imageStyle={styles.categoryImageRadius}
+                >
+                  <View style={styles.categoryImageOverlay} />
 
-                <View style={styles.categoryTop}>
-                  <View style={styles.categoryIcon}>
-                    <Text style={styles.categoryEmoji}>
-                      {category.icon}
+                  <View style={styles.categoryTop}>
+                    <View style={styles.categoryIcon}>
+                      <Text style={styles.categoryEmoji}>
+                        {category.icon}
+                      </Text>
+                    </View>
+
+                    <View style={styles.arrowCircle}>
+                      <Text style={styles.arrowText}>↗</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.categoryTextContainer}>
+                    <Text style={styles.categoryTitle}>
+                      {category.title}
+                    </Text>
+
+                    <Text style={styles.categoryDescription}>
+                      {category.subtitle}
                     </Text>
                   </View>
+                </ImageBackground>
+              </Pressable>
+            ))}
+          </View>
 
-                  <View style={styles.arrowCircle}>
-                    <Text style={styles.arrowText}>↗</Text>
-                  </View>
-                </View>
+          <View style={styles.footer}>
+            <Text style={styles.footerTitle}>
+              TERÊ VERDE 🌿
+            </Text>
 
-                <View style={styles.categoryTextContainer}>
-                  <Text style={styles.categoryTitle}>
-                    {category.title}
-                  </Text>
-
-                  <Text style={styles.categoryDescription}>
-                    {category.subtitle}
-                  </Text>
-                </View>
-              </ImageBackground>
-            </Pressable>
-          ))}
-        </View>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerTitle}>
-            TERÊ VERDE 🌿
-          </Text>
-          <Text style={styles.footerText}>
-            Viva a natureza. Descubra novos caminhos.
-          </Text>
+            <Text style={styles.footerText}>
+              Viva a natureza. Descubra novos caminhos.
+            </Text>
+          </View>
         </View>
       </ScrollView>
-
-      <View style={styles.bottomNav}>
-        <NavItem
-          icon="⌂"
-          label="Início"
-          onPress={() => router.replace('/')}
-        />
-
-        <NavItem
-          icon="🧭"
-          label="Onde ir"
-          active
-          onPress={() => router.replace('/explore')}
-        />
-
-        <NavItem
-          icon="🥾"
-          label="Trilhas"
-          onPress={() => router.push('/trilhas')}
-        />
-
-        <NavItem
-          icon="🌿"
-          label="Natureza"
-          onPress={() => router.push('/natureza')}
-        />
-
-        <NavItem
-          icon="🎉"
-          label="Eventos"
-          onPress={() => router.push('/eventos')}
-        />
-      </View>
     </View>
-  );
-}
-
-function NavItem({
-  icon,
-  label,
-  active = false,
-  onPress,
-}: {
-  icon: string;
-  label: string;
-  active?: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      style={styles.navItem}
-      onPress={onPress}
-    >
-      <Text
-        style={[
-          styles.navIcon,
-          active && styles.navActive,
-        ]}
-      >
-        {icon}
-      </Text>
-
-      <Text
-        style={[
-          styles.navLabel,
-          active && styles.navLabelActive,
-        ]}
-      >
-        {label}
-      </Text>
-
-      {active && <View style={styles.activeIndicator} />}
-    </Pressable>
   );
 }
 
@@ -263,9 +227,15 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    paddingHorizontal: 24,
-    paddingTop: 22,
-    paddingBottom: 28,
+    width: '100%',
+    alignItems: 'center',
+    paddingTop: 55,
+    paddingBottom: 30,
+  },
+
+  container: {
+    width: '100%',
+    maxWidth: 850,
   },
 
   heading: {
@@ -282,7 +252,6 @@ const styles = StyleSheet.create({
 
   title: {
     color: COLORS.darkGreen,
-    fontSize: 32,
     fontWeight: '800',
     letterSpacing: -0.8,
     marginBottom: 8,
@@ -292,7 +261,7 @@ const styles = StyleSheet.create({
     color: COLORS.muted,
     fontSize: 15,
     lineHeight: 23,
-    maxWidth: 330,
+    maxWidth: 420,
   },
 
   heroCard: {
@@ -307,7 +276,6 @@ const styles = StyleSheet.create({
   },
 
   heroImage: {
-    height: 250,
     justifyContent: 'flex-end',
     backgroundColor: COLORS.darkGreen,
   },
@@ -345,10 +313,9 @@ const styles = StyleSheet.create({
 
   heroTitle: {
     color: COLORS.white,
-    fontSize: 27,
     fontWeight: '800',
     lineHeight: 32,
-    maxWidth: 280,
+    maxWidth: 320,
     marginBottom: 7,
   },
 
@@ -401,7 +368,14 @@ const styles = StyleSheet.create({
     gap: 16,
   },
 
+  categoryListTablet: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+
   categoryCard: {
+    width: '100%',
     borderRadius: 20,
     overflow: 'hidden',
     elevation: 3,
@@ -411,13 +385,16 @@ const styles = StyleSheet.create({
     shadowRadius: 7,
   },
 
+  categoryCardTablet: {
+    width: '48.5%',
+  },
+
   cardPressed: {
     opacity: 0.88,
     transform: [{ scale: 0.985 }],
   },
 
   categoryImage: {
-    height: 185,
     justifyContent: 'space-between',
     padding: 17,
     backgroundColor: COLORS.darkGreen,
@@ -501,53 +478,5 @@ const styles = StyleSheet.create({
     color: COLORS.muted,
     fontSize: 12,
     textAlign: 'center',
-  },
-
-  bottomNav: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.white,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    paddingTop: 10,
-    paddingBottom: 8,
-    paddingHorizontal: 4,
-    justifyContent: 'space-around',
-    alignItems: 'center',
-  },
-
-  navItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 47,
-    gap: 3,
-  },
-
-  navIcon: {
-    color: '#7E887D',
-    fontSize: 19,
-  },
-
-  navActive: {
-    color: COLORS.green,
-  },
-
-  navLabel: {
-    color: '#7E887D',
-    fontSize: 9,
-    fontWeight: '600',
-  },
-
-  navLabelActive: {
-    color: COLORS.darkGreen,
-    fontWeight: '800',
-  },
-
-  activeIndicator: {
-    width: 17,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: COLORS.green,
-    marginTop: 1,
   },
 });

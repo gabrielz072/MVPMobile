@@ -1,7 +1,11 @@
-
 import { Ionicons } from '@expo/vector-icons';
-import { router, type Href } from 'expo-router';
-import React from 'react';
+import {
+  router,
+  Stack,
+  type Href,
+  useNavigation,
+} from 'expo-router';
+import React, { useEffect } from 'react';
 import {
   ImageBackground,
   Pressable,
@@ -12,8 +16,6 @@ import {
   View,
 } from 'react-native';
 
-import { UserAccountBar } from '../components/UserAccountBar';
-import MenuInferior from '../components/MenuInferior';
 import { useFavoritos } from '../hooks/useFavoritos';
 
 type Categoria = 'trilhas' | 'natureza' | 'eventos';
@@ -101,6 +103,8 @@ const CATEGORIAS: {
 ];
 
 export default function FavoritosScreen() {
+  const navigation = useNavigation();
+
   const {
     favoritos,
     carregando,
@@ -108,6 +112,12 @@ export default function FavoritosScreen() {
     alternarFavorito,
     estaAtualizando,
   } = useFavoritos();
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
 
   function abrirLogin() {
     router.push('/login');
@@ -137,27 +147,21 @@ export default function FavoritosScreen() {
 
   return (
     <View style={styles.screen}>
+      <Stack.Screen options={{ headerShown: false }} />
+
       <StatusBar barStyle="dark-content" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <UserAccountBar />
-
-        <Pressable
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <Ionicons name="arrow-back" size={19} color={VERDE} />
-          <Text style={styles.backText}>Voltar ao perfil</Text>
-        </Pressable>
-
         <View style={styles.heading}>
           <Text style={styles.eyebrow}>CIRCUITO TERÊ VERDE</Text>
+
           <View style={styles.titleRow}>
             <View style={styles.titleContainer}>
               <Text style={styles.title}>Seus favoritos</Text>
+
               <Text style={styles.subtitle}>
                 Seus lugares e experiências especiais em Teresópolis.
               </Text>
@@ -170,15 +174,20 @@ export default function FavoritosScreen() {
         {!usuarioLogado ? (
           <View style={styles.emptyCard}>
             <Ionicons name="heart-outline" size={48} color={VERDE_MEDIO} />
+
             <Text style={styles.emptyTitle}>
               Entre para ver seus favoritos
             </Text>
+
             <Text style={styles.emptyText}>
               Faça login para salvar trilhas, lugares e eventos
               e encontrar tudo aqui.
             </Text>
+
             <Pressable style={styles.loginButton} onPress={abrirLogin}>
-              <Text style={styles.loginButtonText}>Entrar na minha conta</Text>
+              <Text style={styles.loginButtonText}>
+                Entrar na minha conta
+              </Text>
             </Pressable>
           </View>
         ) : carregando ? (
@@ -209,8 +218,10 @@ export default function FavoritosScreen() {
                       <Text style={styles.sectionTitle}>
                         {categoria.titulo}
                       </Text>
+
                       <Text style={styles.sectionSubtitle}>
-                        {ids.length} {ids.length === 1 ? 'item salvo' : 'itens salvos'}
+                        {ids.length}{' '}
+                        {ids.length === 1 ? 'item salvo' : 'itens salvos'}
                       </Text>
                     </View>
                   </View>
@@ -220,7 +231,10 @@ export default function FavoritosScreen() {
                     const atualizando = estaAtualizando(categoria.id, id);
 
                     return (
-                      <View key={`${categoria.id}-${id}`} style={styles.card}>
+                      <View
+                        key={`${categoria.id}-${id}`}
+                        style={styles.card}
+                      >
                         <Pressable
                           style={styles.cardMain}
                           onPress={() => router.push(item.rota)}
@@ -235,9 +249,14 @@ export default function FavoritosScreen() {
                             <Text style={styles.cardTitle}>
                               {item.nome}
                             </Text>
-                            <Text style={styles.cardDescription} numberOfLines={2}>
+
+                            <Text
+                              style={styles.cardDescription}
+                              numberOfLines={2}
+                            >
                               {item.descricao}
                             </Text>
+
                             <Text style={styles.cardLink}>
                               Ver detalhes →
                             </Text>
@@ -275,16 +294,19 @@ export default function FavoritosScreen() {
                     size={48}
                     color={VERDE_MEDIO}
                   />
+
                   <Text style={styles.emptyTitle}>
                     Sua coleção está vazia
                   </Text>
+
                   <Text style={styles.emptyText}>
                     Quando encontrar uma trilha, lugar ou evento
                     interessante, toque no coração para salvá-lo aqui.
                   </Text>
+
                   <Pressable
                     style={styles.loginButton}
-                    onPress={() => router.push('/trilhas')}
+                    onPress={() => router.push('/explore')}
                   >
                     <Text style={styles.loginButtonText}>
                       Descobrir lugares
@@ -299,8 +321,6 @@ export default function FavoritosScreen() {
           CIRCUITO TERÊ VERDE · TERESÓPOLIS
         </Text>
       </ScrollView>
-
-      <MenuInferior />
     </View>
   );
 }
@@ -312,21 +332,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingTop: 20,
     paddingBottom: 110,
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 8,
-    marginTop: 20,
-    marginBottom: 22,
-  },
-  backText: {
-    color: VERDE,
-    fontSize: 13,
-    fontWeight: '700',
   },
   heading: {
     marginBottom: 27,

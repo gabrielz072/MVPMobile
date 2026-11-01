@@ -52,6 +52,11 @@ export default function RootLayout() {
           />
 
           <Stack.Screen
+            name="favoritos"
+            options={{ headerShown: false }}
+          />
+
+          <Stack.Screen
             name="trilha"
             options={{ headerShown: false }}
           />

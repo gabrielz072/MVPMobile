@@ -137,14 +137,15 @@ export default function AdminTrilhasScreen() {
         setCarregando(false);
       },
       (erro) => {
-        console.error('Erro ao carregar trilhas:', erro);
-        setCarregando(false);
+  console.error('Erro ao carregar trilhas:', erro);
 
-        Alert.alert(
-          'Erro ao carregar',
-          'Não foi possível acessar as trilhas. Verifique as regras do Firestore.',
-        );
-      },
+  setCarregando(false);
+
+  Alert.alert(
+    'Erro ao carregar trilhas',
+    `Código: ${erro.code}\n\nDetalhes: ${erro.message}`,
+  );
+},
     );
 
     return cancelar;

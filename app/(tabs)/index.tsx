@@ -42,6 +42,7 @@ const MAX_DRAG = SCREEN_HEIGHT;
 
 export default function HomeScreen() {
   const { user, login } = useAuth();
+
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [entrando, setEntrando] = useState(false);
@@ -82,16 +83,20 @@ export default function HomeScreen() {
     });
   }, [progress]);
 
-  const panResponder = useRef(
+  // Gesto da apresentação: deslizar para cima abre o login.
+  const introPanResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
+
       onMoveShouldSetPanResponder: (_, gesture) =>
-        Math.abs(gesture.dy) > 7,
+        gesture.dy < -7 && Math.abs(gesture.dy) > Math.abs(gesture.dx),
+
       onPanResponderGrant: () => {
         progress.stopAnimation((value: number) => {
           dragStart.current = value;
         });
       },
+
       onPanResponderMove: (_, gesture) => {
         const next = Math.max(
           0,
@@ -104,25 +109,72 @@ export default function HomeScreen() {
           setLoginVisivel(true);
         }
       },
+
       onPanResponderRelease: (_, gesture) => {
         const current = Math.max(
           0,
           Math.min(1, dragStart.current - gesture.dy / MAX_DRAG),
         );
 
-        const abrir =
+        if (
           gesture.dy < -60 ||
           gesture.vy < -0.5 ||
-          current >= 0.35;
-
-        if (abrir) {
+          current >= 0.5
+        ) {
           abrirLogin();
         } else {
           fecharLogin();
         }
       },
+
       onPanResponderTerminate: () => {
         fecharLogin();
+      },
+    }),
+  ).current;
+
+  // Gesto no cabeçalho do login: deslizar para baixo retorna à apresentação.
+  const loginPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+
+      onMoveShouldSetPanResponder: (_, gesture) =>
+        gesture.dy > 7 && Math.abs(gesture.dy) > Math.abs(gesture.dx),
+
+      onPanResponderGrant: () => {
+        progress.stopAnimation((value: number) => {
+          dragStart.current = value;
+        });
+      },
+
+      onPanResponderMove: (_, gesture) => {
+        const next = Math.max(
+          0,
+          Math.min(1, dragStart.current - gesture.dy / MAX_DRAG),
+        );
+
+        progress.setValue(next);
+      },
+
+      onPanResponderRelease: (_, gesture) => {
+        const current = Math.max(
+          0,
+          Math.min(1, dragStart.current - gesture.dy / MAX_DRAG),
+        );
+
+        if (
+          gesture.dy > 60 ||
+          gesture.vy > 0.5 ||
+          current < 0.5
+        ) {
+          fecharLogin();
+        } else {
+          abrirLogin();
+        }
+      },
+
+      onPanResponderTerminate: () => {
+        abrirLogin();
       },
     }),
   ).current;
@@ -401,7 +453,7 @@ export default function HomeScreen() {
             transform: [{ translateY: introTranslateY }],
           },
         ]}
-        {...panResponder.panHandlers}
+        {...introPanResponder.panHandlers}
       >
         <ImageBackground
           source={FOREST_IMAGE}
@@ -411,39 +463,62 @@ export default function HomeScreen() {
           <View style={styles.imageOverlay} />
 
           <SafeAreaView style={styles.introSafeArea}>
-            <View style={styles.statusSpacer} />
+            <View style={styles.introBrand}>
+              <View style={styles.introBrandLine} />
+              <Text style={styles.introBrandText}>
+                CIRCUITO TERÊ VERDE
+              </Text>
+            </View>
 
             <View style={styles.introText}>
-              <Text style={styles.introTitle}>
-                Circuito
-                {'\n'}
-                Terê
-                {'\n'}
-                Verde
+              <Text style={styles.introEyebrow}>
+                DESCUBRA · EXPLORE · PRESERVE
               </Text>
 
+              <Text style={styles.introTitle}>
+                A natureza
+                {'\n'}
+                está mais
+                {'\n'}
+                perto do que
+                {'\n'}
+                você imagina.
+              </Text>
+
+              <View style={styles.introDivider} />
+
               <Text style={styles.introSubtitle}>
-                Explore conosco
+                Uma jornada pelas paisagens e experiências
+                naturais de Teresópolis.
               </Text>
             </View>
 
             <View style={styles.goArea}>
-              <View style={styles.chevrons}>
-                <Text style={styles.chevron}>⌃</Text>
+              <Text style={styles.goInstruction}>
+                DESLIZE PARA COMEÇAR
+              </Text>
 
-                <Text style={[styles.chevron, styles.chevronSecond]}>
-                  ⌃
-                </Text>
+              <View style={styles.goTrack}>
+                <View style={styles.chevrons}>
+                  <Text style={styles.chevron}>⌃</Text>
+                  <Text style={[styles.chevron, styles.chevronSecond]}>
+                    ⌃
+                  </Text>
+                </View>
+
+                <Pressable
+                  style={styles.goButton}
+                  onPress={abrirLogin}
+                  accessibilityRole="button"
+                  accessibilityLabel="Abrir tela de login"
+                >
+                  <Text style={styles.goButtonText}>GO</Text>
+                </Pressable>
               </View>
 
-              <Pressable
-                style={styles.goButton}
-                onPress={abrirLogin}
-                accessibilityRole="button"
-                accessibilityLabel="Abrir tela de login"
-              >
-                <Text style={styles.goButtonText}>GO</Text>
-              </Pressable>
+              <Text style={styles.goFooter}>
+                TERESÓPOLIS · RIO DE JANEIRO
+              </Text>
             </View>
           </SafeAreaView>
         </ImageBackground>
@@ -460,7 +535,10 @@ export default function HomeScreen() {
         pointerEvents={loginVisivel ? 'auto' : 'none'}
       >
         <SafeAreaView style={styles.loginSafeArea}>
-          <View style={styles.loginHeader}>
+          <View
+            style={styles.loginHeader}
+            {...loginPanResponder.panHandlers}
+          >
             <View style={styles.brandIcon}>
               <Text style={styles.brandIconText}>✳</Text>
             </View>
@@ -617,92 +695,145 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    overflow: 'hidden',
-  },
+  flex: 1,
+  backgroundColor: '#1A481F',
+  overflow: 'hidden',
+},
   fullScreen: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 1,
   },
   backgroundImage: {
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
-  },
+  flex: 1,
+  width: '100%',
+  height: '100%',
+},
   imageOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(5, 20, 10, 0.16)',
+    backgroundColor: 'rgba(5, 20, 10, 0.48)',
   },
   introSafeArea: {
     flex: 1,
     justifyContent: 'space-between',
-    paddingHorizontal: 28,
-    paddingTop: 10,
-    paddingBottom: 28,
+    paddingHorizontal: 30,
+    paddingTop: 24,
+    paddingBottom: 30,
   },
-  statusSpacer: {
-    height: 10,
+  introBrand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  introBrandLine: {
+    width: 28,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: COLORS.lime,
+  },
+  introBrandText: {
+    color: COLORS.white,
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 2.5,
   },
   introText: {
-    marginTop: -30,
+    marginTop: -15,
+  },
+  introEyebrow: {
+    color: '#C5E6A0',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 2,
+    marginBottom: 18,
   },
   introTitle: {
     color: COLORS.white,
-    fontSize: 38,
-    lineHeight: 43,
+    fontSize: 43,
+    lineHeight: 49,
     fontWeight: '800',
-    letterSpacing: -0.8,
-    textShadowColor: 'rgba(0,0,0,0.2)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
+    letterSpacing: -1.5,
+    textShadowColor: 'rgba(0,0,0,0.35)',
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 12,
+  },
+  introDivider: {
+    width: 48,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: COLORS.lime,
+    marginTop: 22,
+    marginBottom: 16,
   },
   introSubtitle: {
-    color: COLORS.white,
-    fontSize: 12,
-    letterSpacing: 2,
-    textAlign: 'center',
-    marginTop: 3,
-    marginRight: 30,
+    color: '#F0F3EC',
+    fontSize: 14,
+    lineHeight: 23,
+    maxWidth: 285,
+    letterSpacing: 0.2,
   },
   goArea: {
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 5,
   },
+  goInstruction: {
+    color: COLORS.white,
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 2,
+    marginBottom: 13,
+  },
+  goTrack: {
+    width: 66,
+    height: 112,
+    borderRadius: 34,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.55)',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 9,
+  },
   chevrons: {
-    height: 25,
+    height: 27,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
   },
   chevron: {
     color: COLORS.white,
-    fontSize: 24,
-    fontWeight: '500',
+    fontSize: 23,
+    fontWeight: '600',
     lineHeight: 19,
-    textShadowColor: 'rgba(0,0,0,0.4)',
-    textShadowRadius: 5,
   },
   chevronSecond: {
-    marginTop: -8,
+    marginTop: -7,
+    opacity: 0.65,
   },
   goButton: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.lime,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
+    elevation: 7,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   goButtonText: {
-    color: COLORS.green,
-    fontSize: 16,
+    color: '#1A481F',
+    fontSize: 15,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  goFooter: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 9,
     fontWeight: '700',
+    letterSpacing: 2,
+    marginTop: 15,
   },
   loginScreen: {
     ...StyleSheet.absoluteFillObject,
@@ -887,26 +1018,6 @@ const styles = StyleSheet.create({
   backButtonText: {
     color: COLORS.green,
     fontSize: 12,
-    fontWeight: '800',
-  },
-  gestureArea: {
-    position: 'absolute',
-    zIndex: 10,
-    bottom: 20,
-    alignSelf: 'center',
-  },
-  gestureButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 3,
-  },
-  gestureButtonText: {
-    color: COLORS.green,
-    fontSize: 24,
     fontWeight: '800',
   },
   authenticatedContainer: {

@@ -1,4 +1,3 @@
-
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -32,7 +31,14 @@ const CAPA =
   'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1200';
 
 export default function PerfilScreen() {
-  const { user, userName, photoURL, updateUserProfile } = useAuth();
+  const {
+    user,
+    userName,
+    photoURL,
+    updateUserProfile,
+    logout,
+  } = useAuth();
+
   const { favoritos, carregando } = useFavoritos();
 
   const [modalEdicao, setModalEdicao] = useState(false);
@@ -121,6 +127,36 @@ export default function PerfilScreen() {
     }
   }
 
+  function sairDaConta() {
+    Alert.alert(
+      'Sair da conta',
+      'Tem certeza de que deseja encerrar sua sessão?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Sair',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+              router.replace('/login');
+            } catch (error) {
+              console.error('Erro ao sair da conta:', error);
+
+              Alert.alert(
+                'Erro',
+                'Não foi possível encerrar sua sessão. Tente novamente.'
+              );
+            }
+          },
+        },
+      ]
+    );
+  }
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -152,6 +188,7 @@ export default function PerfilScreen() {
               {'\n'}
               por você.
             </Text>
+
             <Text style={styles.descricaoCapa}>
               Descubra, explore e viva Teresópolis.
             </Text>
@@ -219,6 +256,7 @@ export default function PerfilScreen() {
                 <Text style={styles.acessoTitulo}>
                   Faça parte dessa experiência
                 </Text>
+
                 <Text style={styles.acessoDescricao}>
                   Acesse sua conta para salvar seus lugares favoritos
                   e aproveitar o Circuito Terê Verde.
@@ -233,6 +271,7 @@ export default function PerfilScreen() {
                 <Text style={styles.botaoEntrarTexto}>
                   Entrar na minha conta
                 </Text>
+
                 <Ionicons
                   name="arrow-forward"
                   size={18}
@@ -258,6 +297,7 @@ export default function PerfilScreen() {
                 <Text style={styles.miniTitulo}>
                   SUA COLEÇÃO PESSOAL
                 </Text>
+
                 <Text style={styles.titulo}>
                   Seus favoritos
                 </Text>
@@ -326,13 +366,34 @@ export default function PerfilScreen() {
           {/* FRASE INSTITUCIONAL */}
           <View style={styles.fraseFinal}>
             <Ionicons name="leaf" size={20} color="#D6E3D0" />
+
             <Text style={styles.fraseFinalTexto}>
               Mais que conhecer lugares, é viver experiências.
             </Text>
+
             <Text style={styles.assinatura}>
               CIRCUITO TERÊ VERDE
             </Text>
           </View>
+
+          {/* BOTÃO SAIR DA CONTA */}
+          {user && (
+            <TouchableOpacity
+              style={styles.botaoSair}
+              onPress={sairDaConta}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name="log-out-outline"
+                size={20}
+                color="#A43232"
+              />
+
+              <Text style={styles.textoBotaoSair}>
+                Sair da conta
+              </Text>
+            </TouchableOpacity>
+          )}
 
           <Text style={styles.rodape}>
             TERESÓPOLIS · RIO DE JANEIRO
@@ -353,7 +414,10 @@ export default function PerfilScreen() {
           <View style={styles.modal}>
             <View style={styles.topoModal}>
               <View>
-                <Text style={styles.tituloModal}>Editar perfil</Text>
+                <Text style={styles.tituloModal}>
+                  Editar perfil
+                </Text>
+
                 <Text style={styles.subtituloModal}>
                   Atualize suas informações pessoais
                 </Text>
@@ -401,13 +465,16 @@ export default function PerfilScreen() {
               <Text style={styles.textoAlterarFoto}>
                 Alterar foto de perfil
               </Text>
+
               <Text style={styles.dicaFoto}>
                 Escolha uma imagem da sua galeria
               </Text>
             </TouchableOpacity>
 
             {/* NOME */}
-            <Text style={styles.labelCampo}>Nome de exibição</Text>
+            <Text style={styles.labelCampo}>
+              Nome de exibição
+            </Text>
 
             <View style={styles.campoNome}>
               <Ionicons
@@ -430,7 +497,9 @@ export default function PerfilScreen() {
             </View>
 
             {/* E-MAIL */}
-            <Text style={styles.labelCampo}>E-mail da conta</Text>
+            <Text style={styles.labelCampo}>
+              E-mail da conta
+            </Text>
 
             <View style={[styles.campoNome, styles.campoDesabilitado]}>
               <Ionicons
@@ -438,6 +507,7 @@ export default function PerfilScreen() {
                 size={19}
                 color={CINZA}
               />
+
               <Text style={styles.emailModal}>
                 {user?.email || ''}
               </Text>
@@ -466,6 +536,7 @@ export default function PerfilScreen() {
                     size={20}
                     color="#FFFFFF"
                   />
+
                   <Text style={styles.textoSalvar}>
                     Salvar alterações
                   </Text>
@@ -478,7 +549,9 @@ export default function PerfilScreen() {
               onPress={() => setModalEdicao(false)}
               disabled={salvando}
             >
-              <Text style={styles.textoCancelar}>Cancelar</Text>
+              <Text style={styles.textoCancelar}>
+                Cancelar
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -498,7 +571,7 @@ const styles = StyleSheet.create({
   capa: {
     height: 390,
     justifyContent: 'space-between',
-    paddingTop: 65,
+    paddingTop: 50,
     paddingHorizontal: 25,
     paddingBottom: 25,
     overflow: 'hidden',
@@ -776,6 +849,26 @@ const styles = StyleSheet.create({
     fontSize: 9,
     letterSpacing: 2,
     marginTop: 15,
+  },
+  botaoSair: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    gap: 9,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E8D6D3',
+    borderRadius: 12,
+    paddingVertical: 13,
+    paddingHorizontal: 25,
+    marginTop: 18,
+    minWidth: 180,
+  },
+  textoBotaoSair: {
+    color: '#A43232',
+    fontSize: 13,
+    fontWeight: 'bold',
   },
   rodape: {
     color: CINZA,
