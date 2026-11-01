@@ -1,4 +1,3 @@
-import { BottomNavigation } from '@/components/BottomNavigation';
 import { router } from 'expo-router';
 import {
   arrayRemove,

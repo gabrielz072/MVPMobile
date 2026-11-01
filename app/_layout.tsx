@@ -103,14 +103,6 @@ export default function RootLayout() {
             name="admin-natureza"
             options={{ headerShown: false }}
           />
-
-          <Stack.Screen
-            name="modal"
-            options={{
-              presentation: 'modal',
-              title: 'Modal',
-            }}
-          />
         </Stack>
 
         <StatusBar style="auto" />
