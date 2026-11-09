@@ -9,7 +9,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const VERDE = '#246D2C';
 const VERDE_ESCURO = '#1A481F';
@@ -17,33 +16,36 @@ const CINZA = '#8A938A';
 
 const ITENS = [
   { label: 'Início', icon: 'home-outline' as const, activeIcon: 'home' as const, path: '/' },
+  { label: 'Explorar', icon: 'compass-outline' as const, activeIcon: 'compass' as const, path: '/explore' },
   { label: 'Natureza', icon: 'leaf-outline' as const, activeIcon: 'leaf' as const, path: '/natureza' },
-  { label: 'Trilhas', icon: 'trail-sign-outline' as const, activeIcon: 'trail-sign' as const, path: '/trilhas' },
   { label: 'Eventos', icon: 'calendar-outline' as const, activeIcon: 'calendar' as const, path: '/eventos' },
-  { label: 'Perfil', icon: 'person-circle-outline' as const, activeIcon: 'person-circle' as const, path: '/login' },
+  { label: 'Perfil', icon: 'person-circle-outline' as const, activeIcon: 'person-circle' as const, path: '/(tabs)/perfil' },
 ];
 
 export default function MenuInferior() {
   const pathname = usePathname();
-  const insets = useSafeAreaInsets();
 
   const ativo = (path: string) => {
     if (path === '/') return pathname === '/' || pathname === '/index';
-    if (path === '/trilhas') {
-      return pathname === '/trilhas' || pathname === '/trilha' ||
-        pathname === '/pedra-do-sino' || pathname === '/pedra-do-acu' ||
-        pathname === '/escalavrado';
+    if (path === '/explore') {
+      return (
+        pathname === '/explore' ||
+        pathname === '/trilhas' ||
+        pathname === '/trilha' ||
+        pathname === '/pedra-do-sino' ||
+        pathname === '/pedra-do-acu' ||
+        pathname === '/escalavrado'
+      );
     }
-    if (path === '/login') return pathname === '/login' || pathname === '/cadastro';
+    if (path === '/(tabs)/perfil') {
+      return pathname === '/perfil' || pathname.startsWith('/perfil/');
+    }
     return pathname === path || pathname.startsWith(`${path}/`);
   };
 
   return (
     <View
-      style={[
-        styles.container,
-        { bottom: Math.max(insets.bottom, Platform.OS === 'ios' ? 8 : 10) },
-      ]}
+      style={styles.container}
     >
       {ITENS.map((item) => {
         const selecionado = ativo(item.path);
@@ -88,28 +90,28 @@ export default function MenuInferior() {
 }
 
 const styles = StyleSheet.create({
-
-container: {
-  position: 'absolute',
-  left: 0,
-  right: 0,
-  height: 68,
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-around',
-  backgroundColor: '#FFFFFF',
-  borderRadius: 23,
-  paddingHorizontal: 4,
-  paddingTop: 5,
-  paddingBottom: 4,
-  elevation: 12,
-  shadowColor: '#183B20',
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.13,
-  shadowRadius: 12,
-  borderWidth: StyleSheet.hairlineWidth,
-  borderColor: '#E8EEE7',
-},
+  container: {
+    position: 'absolute',
+    left: 14,
+    right: 14,
+    bottom: Platform.OS === 'ios' ? 10 : 12,
+    height: 68,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 23,
+    paddingHorizontal: 3,
+    paddingTop: 7,
+    paddingBottom: 5,
+    elevation: 12,
+    shadowColor: '#183B20',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#E8EEE7',
+  },
 
   item: {
     flex: 1,
@@ -123,13 +125,12 @@ container: {
   },
   iconeArea: {
     minWidth: 38,
-    height: 30,
     alignItems: 'center',
     justifyContent: 'center',
   },
   indicador: {
     position: 'absolute',
-    top: -5,
+    top: -7,
     width: 20,
     height: 3,
     borderRadius: 2,
@@ -137,7 +138,8 @@ container: {
   },
   label: {
     fontSize: 10,
-    fontWeight: '500',
+    fontWeight: '600',
+    marginTop: 2,
   },
   labelAtivo: {
     fontWeight: '700',
