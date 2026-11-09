@@ -5,10 +5,10 @@ import { router } from 'expo-router';
 import {
   addDoc,
   collection,
-  deleteDoc,
   doc,
   onSnapshot,
   setDoc,
+  writeBatch,
 } from 'firebase/firestore';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -22,16 +22,7 @@ import {
   View,
 } from 'react-native';
 
-import { trilhas as trilhasLocais } from './data/trilhas';
-
-type Trilha = {
-  id: string;
-  nome: string;
-  descricao: string;
-  dificuldade: string;
-  duracao: string;
-  imagem: string;
-};
+import { combinarTrilhas, TRILHAS_INICIAIS, type Trilha } from '@/lib/trilhas';
 
 const CORES = {
   fundo: '#F8F4F0',
@@ -44,15 +35,6 @@ const CORES = {
   borda: '#E2E7DE',
   vermelho: '#A43232',
 };
-
-const trilhasIniciais: Trilha[] = trilhasLocais.map((trilha) => ({
-  id: trilha.id,
-  nome: trilha.nome,
-  descricao: trilha.descricao,
-  dificuldade: trilha.dificuldade,
-  duracao: trilha.duracao,
-  imagem: trilha.imagem,
-}));
 
 const formularioVazio: Trilha = {
   id: '',
@@ -74,7 +56,8 @@ export default function AdminTrilhasScreen() {
   const [salvando, setSalvando] = useState(false);
   const [criando, setCriando] = useState(false);
 
-  const primeiraLeitura = useRef(true);
+  const inicializarColecao = useRef(false);
+  const selecionadaRef = useRef<Trilha | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -99,8 +82,15 @@ export default function AdminTrilhasScreen() {
     const cancelar = onSnapshot(
       collection(db, 'trails'),
       (snapshot) => {
-        const dados = snapshot.docs.map((item) => {
+        inicializarColecao.current = snapshot.empty;
+        const excluidas: string[] = [];
+        const dados = snapshot.docs.flatMap((item) => {
           const data = item.data();
+
+          if (data.excluido === true) {
+            excluidas.push(item.id);
+            return [];
+          }
 
           return {
             id: item.id,
@@ -109,31 +99,25 @@ export default function AdminTrilhasScreen() {
             dificuldade: data.dificuldade ?? 'Moderada',
             duracao: data.duracao ?? '',
             imagem: data.imagem ?? '',
-          } as Trilha;
+          };
         });
 
-        if (dados.length > 0) {
-          setTrilhas(dados);
+        const atualizadas = combinarTrilhas(dados, excluidas);
+        setTrilhas(atualizadas);
 
-          if (selecionada) {
-            const atualizada = dados.find(
-              (trilha) => trilha.id === selecionada.id,
-            );
+        const trilhaSelecionada = selecionadaRef.current;
+        if (trilhaSelecionada) {
+          const atualizada = atualizadas.find(
+            (trilha) => trilha.id === trilhaSelecionada.id,
+          );
 
-            if (atualizada) {
-              setSelecionada(atualizada);
-              setFormulario(atualizada);
-            }
+          if (atualizada) {
+            selecionadaRef.current = atualizada;
+            setSelecionada(atualizada);
+            setFormulario(atualizada);
           }
-        } else if (primeiraLeitura.current) {
-          setTrilhas(trilhasIniciais);
-        } else {
-          setTrilhas([]);
-          setSelecionada(null);
-          setFormulario(formularioVazio);
         }
 
-        primeiraLeitura.current = false;
         setCarregando(false);
       },
       (erro) => {
@@ -152,12 +136,14 @@ export default function AdminTrilhasScreen() {
   }, [user, role, loading]);
 
   function editarTrilha(trilha: Trilha) {
+    selecionadaRef.current = trilha;
     setSelecionada(trilha);
     setFormulario({ ...trilha });
     setCriando(false);
   }
 
   function novaTrilha() {
+    selecionadaRef.current = null;
     setSelecionada(null);
     setFormulario(formularioVazio);
     setCriando(true);
@@ -199,6 +185,23 @@ export default function AdminTrilhasScreen() {
         atualizadoEm: new Date().toISOString(),
       };
 
+      if (inicializarColecao.current) {
+        const inicializacao = writeBatch(db);
+
+        TRILHAS_INICIAIS.forEach((trilha) => {
+          inicializacao.set(doc(db, 'trails', trilha.id), {
+            nome: trilha.nome,
+            descricao: trilha.descricao,
+            dificuldade: trilha.dificuldade,
+            duracao: trilha.duracao,
+            imagem: trilha.imagem,
+          });
+        });
+
+        await inicializacao.commit();
+        inicializarColecao.current = false;
+      }
+
       if (criando) {
         const referencia = await addDoc(
           collection(db, 'trails'),
@@ -210,6 +213,7 @@ export default function AdminTrilhasScreen() {
           ...dados,
         };
 
+        selecionadaRef.current = criada;
         setSelecionada(criada);
         setFormulario(criada);
         setCriando(false);
@@ -256,10 +260,12 @@ export default function AdminTrilhasScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await deleteDoc(
-                doc(db, 'trails', selecionada.id),
-              );
+              await setDoc(doc(db, 'trails', selecionada.id), {
+                excluido: true,
+                atualizadoEm: new Date().toISOString(),
+              }, { merge: true });
 
+              selecionadaRef.current = null;
               setSelecionada(null);
               setFormulario(formularioVazio);
 
@@ -511,6 +517,7 @@ export default function AdminTrilhasScreen() {
             <Pressable
               style={styles.botaoCancelar}
               onPress={() => {
+                selecionadaRef.current = null;
                 setSelecionada(null);
                 setFormulario(formularioVazio);
                 setCriando(false);

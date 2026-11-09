@@ -4,6 +4,7 @@ import {
   arrayUnion,
   doc,
   getDoc,
+  onSnapshot,
   updateDoc,
 } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
@@ -43,6 +44,42 @@ export function TrilhaDetalhe({
   const { user } = useAuth();
   const [favoritado, setFavoritado] = useState(false);
   const [salvando, setSalvando] = useState(false);
+  const [conteudo, setConteudo] = useState({
+    nome,
+    imagem,
+    texto,
+    dificuldade,
+    duracao,
+  });
+
+  useEffect(() => {
+    return onSnapshot(
+      doc(db, 'trails', id),
+      (snapshot) => {
+        const dados = snapshot.data();
+
+        if (!snapshot.exists() || !dados || dados.excluido === true) {
+          setConteudo({ nome, imagem, texto, dificuldade, duracao });
+          return;
+        }
+
+        setConteudo({
+          nome: dados.nome ?? nome,
+          imagem: dados.imagem ?? imagem,
+          texto: dados.descricao ?? texto,
+          dificuldade: dados.dificuldade ?? dificuldade,
+          duracao: dados.duracao ?? duracao,
+        });
+      },
+      (error) => {
+        console.error('Erro ao carregar conteúdo da trilha:', error);
+        Alert.alert(
+          'Erro ao atualizar trilha',
+          'Não foi possível carregar as informações mais recentes.',
+        );
+      },
+    );
+  }, [id, nome, imagem, texto, dificuldade, duracao]);
 
   useEffect(() => {
     let ativo = true;
@@ -132,7 +169,7 @@ export function TrilhaDetalhe({
 
         <View style={styles.hero}>
           <Image
-            source={{ uri: imagem }}
+            source={{ uri: conteudo.imagem }}
             style={styles.image}
             resizeMode="cover"
           />
@@ -146,7 +183,7 @@ export function TrilhaDetalhe({
 
         <View style={styles.heading}>
           <Text style={styles.eyebrow}>EXPLORE A NATUREZA</Text>
-          <Text style={styles.title}>{nome}</Text>
+          <Text style={styles.title}>{conteudo.nome}</Text>
           <Text style={styles.intro}>
             Descubra uma das paisagens marcantes da Serra dos Órgãos.
           </Text>
@@ -158,7 +195,7 @@ export function TrilhaDetalhe({
               <Text style={styles.iconText}>▲</Text>
             </View>
             <Text style={styles.label}>Dificuldade</Text>
-            <Text style={styles.value}>{dificuldade}</Text>
+            <Text style={styles.value}>{conteudo.dificuldade}</Text>
           </View>
 
           <View style={styles.infoCard}>
@@ -166,14 +203,14 @@ export function TrilhaDetalhe({
               <Text style={styles.iconText}>◷</Text>
             </View>
             <Text style={styles.label}>Duração</Text>
-            <Text style={styles.value}>{duracao}</Text>
+            <Text style={styles.value}>{conteudo.duracao}</Text>
           </View>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Sobre o destino</Text>
           <View style={styles.descriptionCard}>
-            <Text style={styles.description}>{texto}</Text>
+            <Text style={styles.description}>{conteudo.texto}</Text>
           </View>
         </View>
 

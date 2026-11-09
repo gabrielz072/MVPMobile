@@ -1,29 +1,99 @@
 import { UserAccountBar } from '@/components/UserAccountBar';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { useFavoritos } from '@/hooks/useFavoritos';
+import { db } from '@/lib/firebase';
+import type { Trilha } from '@/lib/trilhas';
 import { trilhas } from './data/trilhas';
 
 export default function TrilhaScreen() {
-  const { id } = useLocalSearchParams();
-  const [favoritado, setFavoritado] = useState(false);
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const trilhaId = id;
+  const [trilha, setTrilha] = useState<Trilha | null>(null);
+  const [carregando, setCarregando] = useState(true);
+  const { favoritos, alternarFavorito, usuarioLogado, estaAtualizando } =
+    useFavoritos();
 
-useEffect(() => {
-  async function carregarFavorito() {
-    const favoritosSalvos = await AsyncStorage.getItem('favoritos');
-
-    if (favoritosSalvos) {
-      const favoritos = JSON.parse(favoritosSalvos);
-
-      setFavoritado(favoritos.includes(id));
+  useEffect(() => {
+    if (!trilhaId) {
+      setTrilha(null);
+      setCarregando(false);
+      return;
     }
+
+    setCarregando(true);
+
+    return onSnapshot(
+      doc(db, 'trails', trilhaId),
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const dados = snapshot.data();
+          setTrilha(
+            dados.excluido === true
+              ? null
+              : {
+                  id: snapshot.id,
+                  nome: dados.nome ?? '',
+                  descricao: dados.descricao ?? '',
+                  dificuldade: dados.dificuldade ?? '',
+                  duracao: dados.duracao ?? '',
+                  imagem: dados.imagem ?? '',
+                },
+          );
+        } else {
+          setTrilha(trilhas.find((item) => item.id === trilhaId) ?? null);
+        }
+
+        setCarregando(false);
+      },
+      (error) => {
+        console.error('Erro ao carregar trilha:', error);
+        setTrilha(trilhas.find((item) => item.id === trilhaId) ?? null);
+        setCarregando(false);
+        Alert.alert(
+          'Erro ao carregar trilha',
+          'Não foi possível atualizar as informações. Verifique sua conexão e tente novamente.',
+        );
+      },
+    );
+  }, [trilhaId]);
+
+  async function handleFavorito() {
+    if (!trilha) return;
+
+    if (!usuarioLogado) {
+      Alert.alert(
+        'Entre na sua conta',
+        'Faça login para salvar suas trilhas favoritas.',
+        [
+          { text: 'Agora não', style: 'cancel' },
+          { text: 'Entrar', onPress: () => router.push('/login') },
+        ],
+      );
+      return;
+    }
+
+    await alternarFavorito('trilhas', trilha.id);
   }
 
-  carregarFavorito();
-}, [id]);
-
-  const trilha = trilhas.find((item) => item.id === id);
+  if (carregando) {
+    return (
+      <View style={[styles.container, styles.centralizado]}>
+        <ActivityIndicator size="large" color="#246D2C" />
+      </View>
+    );
+  }
 
   if (!trilha) {
     return (
@@ -50,10 +120,9 @@ return (
       </Text>
     </Pressable>
 
-    <Image
-      source={{ uri: trilha.imagem }}
-      style={styles.image}
-    />
+    {trilha.imagem ? (
+      <Image source={{ uri: trilha.imagem }} style={styles.image} />
+    ) : null}
 
     <Text style={styles.title}>
       {trilha.nome}
@@ -62,36 +131,17 @@ return (
     <Text style={styles.description}>
       {trilha.descricao}
     </Text>
-    <Pressable
-  style={styles.favoriteButton}
-
-  onPress={async () => {
-  const favoritosSalvos = await AsyncStorage.getItem('favoritos');
-
-  let favoritos = favoritosSalvos
-    ? JSON.parse(favoritosSalvos)
-    : [];
-
-  if (favoritado) {
-    favoritos = favoritos.filter(
-      (favoritoId: string) => favoritoId !== id
-    );
-  } else {
-    favoritos.push(id);
-  }
-
-  await AsyncStorage.setItem(
-    'favoritos',
-    JSON.stringify(favoritos)
-  );
-
-  setFavoritado(!favoritado);
-}}
-  >
-  <Text style={styles.favoriteText}>
-    {favoritado ? '★ Favoritado' : '☆ Favoritar'}
-  </Text>
-</Pressable>
+      <Pressable
+        style={styles.favoriteButton}
+        onPress={handleFavorito}
+        disabled={estaAtualizando('trilhas', trilha.id)}
+      >
+        <Text style={styles.favoriteText}>
+          {favoritos.trilhas.includes(trilha.id)
+            ? '★ Favoritado'
+            : '☆ Favoritar'}
+        </Text>
+      </Pressable>
 
     <View style={styles.infoContainer}>
 
@@ -126,6 +176,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
     padding: 24,
+  },
+  centralizado: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   title: {

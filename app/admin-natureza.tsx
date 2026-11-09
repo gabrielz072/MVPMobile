@@ -16,23 +16,12 @@ import { router } from 'expo-router';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 
 import { useAuth } from '@/contexts/AuthContext';
+import {
+  CONTEUDO_NATUREZA_PADRAO,
+  type BlocoNatureza,
+  type ConteudoNatureza,
+} from '@/lib/conteudoNatureza';
 import { db } from '@/lib/firebase';
-
-type BlocoNatureza = {
-  id: string;
-  tipo: 'texto' | 'imagem';
-  titulo: string;
-  conteudo: string;
-  imagem: string;
-};
-
-type ConteudoNatureza = {
-  subtitle: string;
-  heroImage: string;
-  heroTitle: string;
-  heroDescription: string;
-  contentBlocks: BlocoNatureza[];
-};
 
 const CORES = {
   fundo: '#F8F4F0',
@@ -48,55 +37,11 @@ const CORES = {
 
 const DOCUMENTO_NATUREZA = doc(db, 'natureza', 'pagina');
 
-const CONTEUDO_PADRAO: ConteudoNatureza = {
-  subtitle:
-    'Biodiversidade e montanhas que fazem de Teresópolis um destino especial.',
-  heroImage:
-    'https://images.unsplash.com/photo-1448375240586-882707db888b',
-  heroTitle: 'Um encontro com a natureza',
-  heroDescription:
-    'Descubra a beleza da Mata Atlântica e das montanhas da Serra dos Órgãos.',
-  contentBlocks: [
-    {
-      id: 'biodiversidade',
-      tipo: 'texto',
-      titulo: 'Biodiversidade da Mata Atlântica',
-      conteudo:
-        'Teresópolis está inserida em uma região de grande riqueza natural, com florestas, rios, nascentes e uma diversidade de espécies. A Mata Atlântica desempenha um papel importante na conservação da água, na proteção do solo e no equilíbrio ambiental.',
-      imagem: '',
-    },
-    {
-      id: 'imagem-montanhas',
-      tipo: 'imagem',
-      titulo: 'As montanhas da Serra dos Órgãos',
-      conteudo: '',
-      imagem:
-        'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b',
-    },
-    {
-      id: 'montanhismo',
-      tipo: 'texto',
-      titulo: 'A Capital Nacional do Montanhismo',
-      conteudo:
-        'Conhecida por suas montanhas e trilhas, Teresópolis atrai visitantes interessados em caminhadas, escaladas e contemplação da natureza. Essas atividades devem ser realizadas com planejamento, respeito às regras locais e atenção à segurança.',
-      imagem: '',
-    },
-    {
-      id: 'conservacao',
-      tipo: 'texto',
-      titulo: 'Preserve para continuar descobrindo',
-      conteudo:
-        'Preservar a natureza é responsabilidade de todos. Não deixe lixo nas trilhas, evite retirar plantas ou animais de seu ambiente natural, respeite as sinalizações e procure reduzir os impactos da sua visita.',
-      imagem: '',
-    },
-  ],
-};
-
 export default function AdminNatureza() {
   const { user, role } = useAuth();
 
   const [conteudo, setConteudo] =
-    useState<ConteudoNatureza>(CONTEUDO_PADRAO);
+    useState<ConteudoNatureza>(CONTEUDO_NATUREZA_PADRAO);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [alterado, setAlterado] = useState(false);
@@ -114,14 +59,14 @@ export default function AdminNatureza() {
           const dados = snapshot.data() as Partial<ConteudoNatureza>;
 
           setConteudo({
-            ...CONTEUDO_PADRAO,
+            ...CONTEUDO_NATUREZA_PADRAO,
             ...dados,
             contentBlocks: Array.isArray(dados.contentBlocks)
               ? dados.contentBlocks
-              : CONTEUDO_PADRAO.contentBlocks,
+              : CONTEUDO_NATUREZA_PADRAO.contentBlocks,
           });
         } else {
-          setConteudo(CONTEUDO_PADRAO);
+          setConteudo(CONTEUDO_NATUREZA_PADRAO);
         }
 
         setCarregando(false);
@@ -333,9 +278,8 @@ export default function AdminNatureza() {
 
         <View style={styles.aviso}>
           <Text style={styles.avisoTexto}>
-            As alterações são salvas no Firestore. Para aparecerem
-            na página pública, ela também precisa estar configurada
-            para carregar este conteúdo.
+            As alterações salvas aqui são exibidas na página pública
+            de Natureza.
           </Text>
         </View>
 

@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
-import { Alert } from 'react-native';
 import MenuInferior from '@/components/MenuInferior';
 import {
+  Alert,
   ImageBackground,
   Pressable,
   ScrollView,
@@ -10,9 +10,17 @@ import {
   Text,
   View,
 } from 'react-native';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
 
 import BotaoFavorito from '@/components/BotaoFavorito';
 import { useFavoritos } from '@/hooks/useFavoritos';
+import {
+  combinarTrilhas,
+  TRILHAS_PUBLICAS,
+  type Trilha,
+} from '@/lib/trilhas';
+import { db } from '@/lib/firebase';
 
 const COLORS = {
   background: '#f8f4f0',
@@ -25,54 +33,20 @@ const COLORS = {
   border: '#E6E5DC',
 };
 
-type Trail = {
-  id: string;
-  name: string;
-  location: string;
-  difficulty: string;
-  description: string;
-  image: string;
-  route: '/escalavrado' | '/pedra-do-acu' | '/pedra-do-sino';
-};
-
-const TRAILS: Trail[] = [
-  {
-    id: 'escalavrado',
-    name: 'Escalavrado',
-    location: 'Parque Nacional da Serra dos Órgãos',
-    difficulty: 'Desafiadora',
-    description:
-      'Conheça uma das montanhas mais marcantes da Serra dos Órgãos.',
-    image:
-      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=85',
-    route: '/escalavrado',
-  },
-  {
-    id: 'acu',
-    name: 'Pedra do Açu',
-    location: 'Serra dos Órgãos',
-    difficulty: 'Desafiadora',
-    description:
-      'Explore paisagens montanhosas e cenários naturais impressionantes.',
-    image:
-      'https://images.unsplash.com/photo-1464278533981-50106e6176b1?w=1200&q=85',
-    route: '/pedra-do-acu',
-  },
-  {
-    id: 'sino',
-    name: 'Pedra do Sino',
-    location: 'Parque Nacional da Serra dos Órgãos',
-    difficulty: 'Desafiadora',
-    description:
-      'Descubra uma das experiências de montanha mais conhecidas da região.',
-    image:
-      'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=1200&q=85',
-    route: '/pedra-do-sino',
-  },
-];
+function abrirTrilha(id: string) {
+  if (id === '1') {
+    router.push('/pedra-do-sino');
+  } else if (id === '2') {
+    router.push('/escalavrado');
+  } else if (id === '3') {
+    router.push('/pedra-do-acu');
+  } else {
+    router.push({ pathname: '/trilha', params: { id } });
+  }
+}
 
 type TrailCardProps = {
-  trail: Trail;
+  trail: Trilha;
   favorito: boolean;
   onFavoritoPress: () => void;
   favoritoCarregando: boolean;
@@ -87,7 +61,7 @@ function TrailCard({
   return (
     <View style={styles.trailCard}>
       <ImageBackground
-        source={{ uri: trail.image }}
+        source={trail.imagem ? { uri: trail.imagem } : undefined}
         style={styles.trailImage}
         imageStyle={styles.trailImageRadius}
         resizeMode="cover"
@@ -96,20 +70,20 @@ function TrailCard({
 
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Conhecer a trilha ${trail.name}`}
-          onPress={() => router.push(trail.route)}
+          accessibilityLabel={`Conhecer a trilha ${trail.nome}`}
+          onPress={() => abrirTrilha(trail.id)}
           style={styles.imagePressable}
         >
           <View style={styles.difficultyBadge}>
             <Text style={styles.difficultyText}>
-              {trail.difficulty}
+              {trail.dificuldade}
             </Text>
           </View>
 
           <View style={styles.imageContent}>
-            <Text style={styles.trailName}>{trail.name}</Text>
+            <Text style={styles.trailName}>{trail.nome}</Text>
             <Text style={styles.trailLocation}>
-              {trail.location}
+              Teresópolis, RJ
             </Text>
           </View>
         </Pressable>
@@ -125,14 +99,14 @@ function TrailCard({
 
       <Pressable
         accessibilityRole="button"
-        onPress={() => router.push(trail.route)}
+        onPress={() => abrirTrilha(trail.id)}
         style={({ pressed }) => [
           styles.cardContent,
           pressed && styles.cardContentPressed,
         ]}
       >
         <Text style={styles.trailDescription}>
-          {trail.description}
+          {trail.descricao}
         </Text>
 
         <View style={styles.cardFooter}>
@@ -150,6 +124,43 @@ function TrailCard({
 }
 
 export default function TrilhasScreen() {
+  const [trilhas, setTrilhas] = useState<Trilha[]>(TRILHAS_PUBLICAS);
+
+  useEffect(() => {
+    return onSnapshot(
+      collection(db, 'trails'),
+      (snapshot) => {
+        const excluidas: string[] = [];
+        const salvas = snapshot.docs.flatMap((item) => {
+          const data = item.data();
+
+          if (data.excluido === true) {
+            excluidas.push(item.id);
+            return [];
+          }
+
+          return {
+            id: item.id,
+            nome: data.nome ?? '',
+            descricao: data.descricao ?? '',
+            dificuldade: data.dificuldade ?? 'Moderada',
+            duracao: data.duracao ?? '',
+            imagem: data.imagem ?? '',
+          };
+        });
+
+        setTrilhas(combinarTrilhas(salvas, excluidas, TRILHAS_PUBLICAS));
+      },
+      (error) => {
+        console.error('Erro ao carregar trilhas:', error);
+        Alert.alert(
+          'Erro ao carregar trilhas',
+          'Não foi possível atualizar as trilhas. Verifique sua conexão e tente novamente.',
+        );
+      },
+    );
+  }, []);
+
   const {
     favoritos,
     alternarFavorito,
@@ -265,13 +276,13 @@ export default function TrilhasScreen() {
 
           <View style={styles.countBadge}>
             <Text style={styles.countText}>
-              {TRAILS.length} trilhas
+              {trilhas.length} trilhas
             </Text>
           </View>
         </View>
 
         <View style={styles.trailsList}>
-          {TRAILS.map((trail) => (
+          {trilhas.map((trail) => (
             <TrailCard
               key={trail.id}
               trail={trail}

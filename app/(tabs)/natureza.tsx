@@ -1,7 +1,14 @@
 import BotaoFavorito from '@/components/BotaoFavorito';
+import {
+  CONTEUDO_NATUREZA_PADRAO,
+  type ConteudoNatureza,
+} from '@/lib/conteudoNatureza';
+import { db } from '@/lib/firebase';
 import { useFavoritos } from '@/hooks/useFavoritos';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   ImageBackground,
@@ -24,9 +31,6 @@ const COLORS = {
   lightGreen: '#EAF1E5',
 };
 
-const imagemNatureza =
-  'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1400&q=85';
-
 export default function NaturezaScreen() {
   const { width, height } = useWindowDimensions();
 
@@ -36,6 +40,37 @@ export default function NaturezaScreen() {
   const horizontalPadding = isSmallScreen ? 16 : isTablet ? 32 : 24;
   const heroHeight = Math.min(320, Math.max(210, height * 0.34));
   const secondaryHeight = isTablet ? 260 : 220;
+
+  const [conteudo, setConteudo] =
+    useState<ConteudoNatureza>(CONTEUDO_NATUREZA_PADRAO);
+
+  useEffect(() => {
+    return onSnapshot(
+      doc(db, 'natureza', 'pagina'),
+      (snapshot) => {
+        if (!snapshot.exists()) {
+          setConteudo(CONTEUDO_NATUREZA_PADRAO);
+          return;
+        }
+
+        const dados = snapshot.data() as Partial<ConteudoNatureza>;
+        setConteudo({
+          ...CONTEUDO_NATUREZA_PADRAO,
+          ...dados,
+          contentBlocks: Array.isArray(dados.contentBlocks)
+            ? dados.contentBlocks
+            : CONTEUDO_NATUREZA_PADRAO.contentBlocks,
+        });
+      },
+      (error) => {
+        console.error('Erro ao carregar a página Natureza:', error);
+        Alert.alert(
+          'Erro ao carregar Natureza',
+          'Não foi possível atualizar o conteúdo. Verifique sua conexão e tente novamente.',
+        );
+      },
+    );
+  }, []);
 
   const {
     favoritos,
@@ -97,14 +132,17 @@ export default function NaturezaScreen() {
             </Text>
 
             <Text style={styles.subtitle}>
-              Biodiversidade e montanhas que fazem de Teresópolis
-              um destino especial.
+              {conteudo.subtitle}
             </Text>
           </View>
 
           <View style={styles.heroCard}>
             <ImageBackground
-              source={{ uri: imagemNatureza }}
+              source={
+                conteudo.heroImage
+                  ? { uri: conteudo.heroImage }
+                  : undefined
+              }
               style={[
                 styles.heroImage,
                 { height: heroHeight },
@@ -126,12 +164,11 @@ export default function NaturezaScreen() {
                     { fontSize: isSmallScreen ? 23 : 27 },
                   ]}
                 >
-                  Um encontro com a natureza
+                  {conteudo.heroTitle}
                 </Text>
 
                 <Text style={styles.heroDescription}>
-                  Descubra a beleza da Mata Atlântica e das montanhas
-                  da Serra dos Órgãos.
+                  {conteudo.heroDescription}
                 </Text>
 
                 <Pressable
@@ -157,137 +194,89 @@ export default function NaturezaScreen() {
             </Text>
           </View>
 
-          <View style={styles.infoCard}>
-            <View style={styles.cardHeading}>
-              <View style={styles.cardIcon}>
-                <Text style={styles.cardEmoji}>🌳</Text>
-              </View>
-
-              <View style={styles.cardHeadingText}>
-                <Text style={styles.cardTitle}>
-                  Biodiversidade da Mata Atlântica
-                </Text>
-
-                <Text style={styles.cardKicker}>
-                  FLORESTAS E VIDA SILVESTRE
-                </Text>
-              </View>
-
-              <BotaoFavorito
-                salvo={favoritos.natureza.includes('mata-atlantica')}
-                onPress={() => handleFavorito('mata-atlantica')}
-                disabled={estaAtualizando('natureza', 'mata-atlantica')}
-              />
-            </View>
-
-            <Text style={styles.cardText}>
-              Teresópolis está inserida no bioma da Mata Atlântica,
-              um dos ambientes mais ricos e ameaçados do Brasil.
-              A cidade abriga áreas de floresta, rios, cachoeiras,
-              encostas e campos de altitude, criando diferentes
-              habitats para a vida silvestre. No Parque Nacional da
-              Serra dos Órgãos e em outras áreas preservadas, é
-              possível encontrar uma grande variedade de árvores,
-              bromélias, orquídeas, aves, pequenos mamíferos e
-              outros animais. Essa diversidade torna a região
-              importante para a conservação e para a observação
-              da natureza.
-            </Text>
-          </View>
-
-          <View style={styles.imageCard}>
-            <ImageBackground
-              source={{
-                uri: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=85',
-              }}
-              style={[
-                styles.secondaryImage,
-                { height: secondaryHeight },
-              ]}
-              imageStyle={styles.secondaryImageRadius}
-            >
-              <View style={styles.secondaryOverlay} />
-
-              <View style={styles.secondaryImageContent}>
-                <Text style={styles.secondaryImageTag}>
-                  SERRA DOS ÓRGÃOS
-                </Text>
-
-                <Text
+          {conteudo.contentBlocks.map((bloco) =>
+            bloco.tipo === 'imagem' ? (
+              <View key={bloco.id} style={styles.imageCard}>
+                <ImageBackground
+                  source={
+                    bloco.imagem
+                      ? { uri: bloco.imagem }
+                      : undefined
+                  }
                   style={[
-                    styles.secondaryImageTitle,
-                    { fontSize: isSmallScreen ? 21 : 24 },
+                    styles.secondaryImage,
+                    { height: secondaryHeight },
                   ]}
+                  imageStyle={styles.secondaryImageRadius}
                 >
-                  Montanhas que inspiram aventura
+                  <View style={styles.secondaryOverlay} />
+                  <View style={styles.secondaryImageContent}>
+                    <Text style={styles.secondaryImageTag}>
+                      SERRA DOS ÓRGÃOS
+                    </Text>
+                    <Text
+                      style={[
+                        styles.secondaryImageTitle,
+                        { fontSize: isSmallScreen ? 21 : 24 },
+                      ]}
+                    >
+                      {bloco.titulo}
+                    </Text>
+                  </View>
+                </ImageBackground>
+              </View>
+            ) : bloco.id === 'conservacao' ? (
+              <View key={bloco.id} style={styles.conservationCard}>
+                <Text style={styles.conservationIcon}>🍃</Text>
+                <Text style={styles.conservationTitle}>
+                  {bloco.titulo}
+                </Text>
+                <Text style={styles.conservationText}>
+                  {bloco.conteudo}
                 </Text>
               </View>
-            </ImageBackground>
-          </View>
-
-          <View style={styles.infoCard}>
-            <View style={styles.cardHeading}>
-              <View style={styles.cardIcon}>
-                <Text style={styles.cardEmoji}>🥾</Text>
+            ) : (
+              <View key={bloco.id} style={styles.infoCard}>
+                <View style={styles.cardHeading}>
+                  <View style={styles.cardIcon}>
+                    <Text style={styles.cardEmoji}>🌿</Text>
+                  </View>
+                  <View style={styles.cardHeadingText}>
+                    <Text style={styles.cardTitle}>{bloco.titulo}</Text>
+                    {bloco.id === 'mata-atlantica' && (
+                      <Text style={styles.cardKicker}>
+                        FLORESTAS E VIDA SILVESTRE
+                      </Text>
+                    )}
+                    {bloco.id === 'montanhismo' && (
+                      <Text style={styles.cardKicker}>
+                        AVENTURA E EXPLORAÇÃO
+                      </Text>
+                    )}
+                  </View>
+                  {bloco.id !== 'conservacao' && (
+                    <BotaoFavorito
+                      salvo={favoritos.natureza.includes(bloco.id)}
+                      onPress={() => handleFavorito(bloco.id)}
+                      disabled={estaAtualizando('natureza', bloco.id)}
+                    />
+                  )}
+                </View>
+                <Text style={styles.cardText}>{bloco.conteudo}</Text>
+                {bloco.id === 'montanhismo' && (
+                  <Pressable
+                    style={styles.detailsButton}
+                    onPress={() => router.push('/trilhas')}
+                  >
+                    <Text style={styles.detailsButtonText}>
+                      Conhecer as trilhas
+                    </Text>
+                    <Text style={styles.detailsArrow}>↗</Text>
+                  </Pressable>
+                )}
               </View>
-
-              <View style={styles.cardHeadingText}>
-                <Text style={styles.cardTitle}>
-                  A Capital Nacional do Montanhismo
-                </Text>
-
-                <Text style={styles.cardKicker}>
-                  AVENTURA E EXPLORAÇÃO
-                </Text>
-              </View>
-
-              <BotaoFavorito
-                salvo={favoritos.natureza.includes('montanhismo')}
-                onPress={() => handleFavorito('montanhismo')}
-                disabled={estaAtualizando('natureza', 'montanhismo')}
-              />
-            </View>
-
-            <Text style={styles.cardText}>
-              Teresópolis também é conhecida como a Capital Nacional
-              do Montanhismo por sua história ligada às montanhas
-              da Serra dos Órgãos e pela variedade de experiências
-              ao ar livre que oferece. A cidade reúne trilhas,
-              travessias, escaladas e vias de diferentes níveis de
-              dificuldade. As formações rochosas e os cenários de
-              Pedra do Sino, Pedra do Açu e Escalavrado atraem
-              montanhistas e visitantes durante todo o ano. Para
-              aproveitar esses lugares com segurança, é importante
-              consultar as condições da trilha, respeitar os limites
-              do parque, levar água e evitar deixar qualquer resíduo
-              pelo caminho.
-            </Text>
-
-            <Pressable
-              style={styles.detailsButton}
-              onPress={() => router.push('/trilhas')}
-            >
-              <Text style={styles.detailsButtonText}>
-                Conhecer as trilhas
-              </Text>
-
-              <Text style={styles.detailsArrow}>↗</Text>
-            </Pressable>
-          </View>
-
-          <View style={styles.conservationCard}>
-            <Text style={styles.conservationIcon}>🍃</Text>
-
-            <Text style={styles.conservationTitle}>
-              Preserve para continuar descobrindo
-            </Text>
-
-            <Text style={styles.conservationText}>
-              Respeite as orientações locais, cuide das trilhas e
-              leve seus resíduos de volta. A conservação também
-              faz parte da aventura.
-            </Text>
-          </View>
+            ),
+          )}
 
           <View style={styles.footer}>
             <Text style={styles.footerTitle}>
