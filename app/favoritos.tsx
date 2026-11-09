@@ -5,8 +5,10 @@ import {
   type Href,
   useNavigation,
 } from 'expo-router';
-import React, { useEffect } from 'react';
+import { collection, onSnapshot } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
 import {
+  Alert,
   ImageBackground,
   Pressable,
   ScrollView,
@@ -17,6 +19,8 @@ import {
 } from 'react-native';
 
 import { useFavoritos } from '../hooks/useFavoritos';
+import { db } from '@/lib/firebase';
+import { combinarTrilhas, TRILHAS_PUBLICAS, type Trilha } from '@/lib/trilhas';
 
 type Categoria = 'trilhas' | 'natureza' | 'eventos';
 
@@ -35,10 +39,34 @@ const CINZA = '#788078';
 
 const CATALOGO: Record<Categoria, Record<string, ItemFavorito>> = {
   trilhas: {
+    '2': {
+      id: '2',
+      nome: 'Trilha do Escalavrado',
+      descricao: 'Conheça uma das montanhas mais marcantes da Serra dos Órgãos.',
+      imagem:
+        'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1000',
+      rota: '/escalavrado',
+    },
+    '3': {
+      id: '3',
+      nome: 'Pedra do Açu',
+      descricao: 'Explore paisagens montanhosas e cenários naturais impressionantes.',
+      imagem:
+        'https://images.unsplash.com/photo-1464278533981-50106e6176b1?w=1000',
+      rota: '/pedra-do-acu',
+    },
+    '1': {
+      id: '1',
+      nome: 'Pedra do Sino',
+      descricao: 'Descubra uma das experiências de montanha mais conhecidas da região.',
+      imagem:
+        'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=1000',
+      rota: '/pedra-do-sino',
+    },
     escalavrado: {
       id: 'escalavrado',
-      nome: 'Escalavrado',
-      descricao: 'Uma das montanhas mais marcantes da Serra dos Órgãos.',
+      nome: 'Trilha do Escalavrado',
+      descricao: 'Conheça uma das montanhas mais marcantes da Serra dos Órgãos.',
       imagem:
         'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1000',
       rota: '/escalavrado',
@@ -46,7 +74,7 @@ const CATALOGO: Record<Categoria, Record<string, ItemFavorito>> = {
     acu: {
       id: 'acu',
       nome: 'Pedra do Açu',
-      descricao: 'Paisagens montanhosas e cenários impressionantes.',
+      descricao: 'Explore paisagens montanhosas e cenários naturais impressionantes.',
       imagem:
         'https://images.unsplash.com/photo-1464278533981-50106e6176b1?w=1000',
       rota: '/pedra-do-acu',
@@ -54,7 +82,7 @@ const CATALOGO: Record<Categoria, Record<string, ItemFavorito>> = {
     sino: {
       id: 'sino',
       nome: 'Pedra do Sino',
-      descricao: 'Uma experiência inesquecível na Serra dos Órgãos.',
+      descricao: 'Descubra uma das experiências de montanha mais conhecidas da região.',
       imagem:
         'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=1000',
       rota: '/pedra-do-sino',
@@ -104,6 +132,7 @@ const CATEGORIAS: {
 
 export default function FavoritosScreen() {
   const navigation = useNavigation();
+  const [trilhas, setTrilhas] = useState<Trilha[]>(TRILHAS_PUBLICAS);
 
   const {
     favoritos,
@@ -119,11 +148,69 @@ export default function FavoritosScreen() {
     });
   }, [navigation]);
 
+  useEffect(() => {
+    return onSnapshot(
+      collection(db, 'trails'),
+      (snapshot) => {
+        const excluidas: string[] = [];
+        const salvas = snapshot.docs.flatMap((item) => {
+          const data = item.data();
+
+          if (data.excluido === true) {
+            excluidas.push(item.id);
+            return [];
+          }
+
+          return {
+            id: item.id,
+            nome: data.nome ?? '',
+            descricao: data.descricao ?? '',
+            dificuldade: data.dificuldade ?? '',
+            duracao: data.duracao ?? '',
+            imagem: data.imagem ?? '',
+          };
+        });
+
+        setTrilhas(combinarTrilhas(salvas, excluidas, TRILHAS_PUBLICAS));
+      },
+      (error) => {
+        console.error('Erro ao carregar trilhas favoritas:', error);
+        Alert.alert(
+          'Erro ao carregar favoritos',
+          'Não foi possível carregar as informações das trilhas.',
+        );
+      },
+    );
+  }, []);
+
   function abrirLogin() {
     router.push('/login');
   }
 
   function obterItem(categoria: Categoria, id: string): ItemFavorito {
+    if (categoria === 'trilhas') {
+      const trilha = trilhas.find((item) => item.id === id);
+
+      if (trilha) {
+        const rota: Href =
+          trilha.id === '1'
+            ? '/pedra-do-sino'
+            : trilha.id === '2'
+              ? '/escalavrado'
+              : trilha.id === '3'
+                ? '/pedra-do-acu'
+                : { pathname: '/trilha', params: { id: trilha.id } };
+
+        return {
+          id: trilha.id,
+          nome: trilha.nome,
+          descricao: trilha.descricao,
+          imagem: trilha.imagem,
+          rota,
+        };
+      }
+    }
+
     const conhecido = CATALOGO[categoria][id];
 
     if (conhecido) return conhecido;

@@ -1,12 +1,5 @@
 import { router } from 'expo-router';
-import {
-  arrayRemove,
-  arrayUnion,
-  doc,
-  getDoc,
-  onSnapshot,
-  updateDoc,
-} from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -21,7 +14,7 @@ import {
 } from 'react-native';
 
 import { UserAccountBar } from '@/components/UserAccountBar';
-import { useAuth } from '@/contexts/AuthContext';
+import { useFavoritos } from '@/hooks/useFavoritos';
 import { db } from '@/lib/firebase';
 
 type TrilhaDetalheProps = {
@@ -41,9 +34,14 @@ export function TrilhaDetalhe({
   dificuldade,
   duracao,
 }: TrilhaDetalheProps) {
-  const { user } = useAuth();
-  const [favoritado, setFavoritado] = useState(false);
-  const [salvando, setSalvando] = useState(false);
+  const {
+    favoritos,
+    alternarFavorito: atualizarFavorito,
+    usuarioLogado,
+    estaAtualizando,
+  } = useFavoritos();
+  const favoritado = favoritos.trilhas.includes(id);
+  const salvando = estaAtualizando('trilhas', id);
   const [conteudo, setConteudo] = useState({
     nome,
     imagem,
@@ -81,43 +79,8 @@ export function TrilhaDetalhe({
     );
   }, [id, nome, imagem, texto, dificuldade, duracao]);
 
-  useEffect(() => {
-    let ativo = true;
-
-    async function carregarFavorito() {
-      if (!user) {
-        setFavoritado(false);
-        return;
-      }
-
-      try {
-        const perfil = await getDoc(doc(db, 'users', user.uid));
-        const favoritos = perfil.data()?.favoritos;
-
-        if (ativo) {
-          setFavoritado(
-            Array.isArray(favoritos) && favoritos.includes(id)
-          );
-        }
-      } catch {
-        if (ativo) {
-          Alert.alert(
-            'Não foi possível carregar',
-            'Verifique sua conexão e tente novamente.'
-          );
-        }
-      }
-    }
-
-    carregarFavorito();
-
-    return () => {
-      ativo = false;
-    };
-  }, [id, user]);
-
   async function alternarFavorito() {
-    if (!user) {
+    if (!usuarioLogado) {
       Alert.alert(
         'Faça login',
         'Entre na sua conta para salvar trilhas favoritas.',
@@ -129,24 +92,7 @@ export function TrilhaDetalhe({
       return;
     }
 
-    if (salvando) return;
-
-    setSalvando(true);
-
-    try {
-      await updateDoc(doc(db, 'users', user.uid), {
-        favoritos: favoritado ? arrayRemove(id) : arrayUnion(id),
-      });
-
-      setFavoritado((atual) => !atual);
-    } catch {
-      Alert.alert(
-        'Não foi possível salvar',
-        'Tente novamente em instantes.'
-      );
-    } finally {
-      setSalvando(false);
-    }
+    await atualizarFavorito('trilhas', id);
   }
 
   return (

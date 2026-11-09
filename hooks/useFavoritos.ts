@@ -2,11 +2,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import {
-  arrayRemove,
-  arrayUnion,
   doc,
   onSnapshot,
-  updateDoc,
+  runTransaction,
 } from 'firebase/firestore';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,6 +26,12 @@ const FAVORITOS_VAZIOS: ListaFavoritos = {
   natureza: [],
   eventos: [],
 };
+
+function listaDeIds(valor: unknown): string[] {
+  return Array.isArray(valor)
+    ? valor.filter((id): id is string => typeof id === 'string')
+    : [];
+}
 
 export function useFavoritos() {
   const { user } = useAuth();
@@ -53,18 +57,18 @@ export function useFavoritos() {
     return onSnapshot(
       referencia,
       (snapshot) => {
-        const dados = snapshot.data()?.favoritos ?? {};
+        const favoritosSalvos: unknown = snapshot.data()?.favoritos;
+        const dados =
+          typeof favoritosSalvos === 'object' && favoritosSalvos !== null
+            ? favoritosSalvos as Record<string, unknown>
+            : {};
 
         setFavoritos({
-          trilhas: Array.isArray(dados.trilhas)
-            ? dados.trilhas
-            : [],
-          natureza: Array.isArray(dados.natureza)
-            ? dados.natureza
-            : [],
-          eventos: Array.isArray(dados.eventos)
-            ? dados.eventos
-            : [],
+          trilhas: Array.isArray(favoritosSalvos)
+            ? listaDeIds(favoritosSalvos)
+            : listaDeIds(dados.trilhas),
+          natureza: listaDeIds(dados.natureza),
+          eventos: listaDeIds(dados.eventos),
         });
 
         setCarregando(false);
@@ -74,7 +78,7 @@ export function useFavoritos() {
         setCarregando(false);
       },
     );
-  }, [user?.uid]);
+  }, [user]);
 
   const alternarFavorito = useCallback(
     async (
@@ -93,15 +97,47 @@ export function useFavoritos() {
       }));
 
       try {
-        const jaFavoritado =
-          favoritos[categoria].includes(id);
-
         const referencia = doc(db, 'users', user.uid);
 
-        await updateDoc(referencia, {
-          [`favoritos.${categoria}`]: jaFavoritado
-            ? arrayRemove(id)
-            : arrayUnion(id),
+        await runTransaction(db, async (transaction) => {
+          const perfil = await transaction.get(referencia);
+
+          if (!perfil.exists()) {
+            throw new Error('O perfil do usuário não foi encontrado.');
+          }
+
+          const favoritosSalvos: unknown = perfil.data().favoritos;
+          const dados =
+            typeof favoritosSalvos === 'object' && favoritosSalvos !== null
+              ? favoritosSalvos as Record<string, unknown>
+              : {};
+          const trilhasAtuais = Array.isArray(favoritosSalvos)
+            ? listaDeIds(favoritosSalvos)
+            : listaDeIds(dados.trilhas);
+          const listaAtual = categoria === 'trilhas'
+            ? trilhasAtuais
+            : listaDeIds(dados[categoria]);
+          const listaAtualizada = listaAtual.includes(id)
+            ? listaAtual.filter((favoritoId) => favoritoId !== id)
+            : [...listaAtual, id];
+
+          transaction.set(
+            referencia,
+            {
+              favoritos: {
+                trilhas: categoria === 'trilhas'
+                  ? listaAtualizada
+                  : trilhasAtuais,
+                natureza: categoria === 'natureza'
+                  ? listaAtualizada
+                  : listaDeIds(dados.natureza),
+                eventos: categoria === 'eventos'
+                  ? listaAtualizada
+                  : listaDeIds(dados.eventos),
+              },
+            },
+            { merge: true },
+          );
         });
 
         return true;
@@ -121,7 +157,7 @@ export function useFavoritos() {
         }));
       }
     },
-    [user, favoritos, atualizando],
+    [user, atualizando],
   );
 
   return {
