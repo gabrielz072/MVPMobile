@@ -32,8 +32,6 @@ const COLORS = {
   border: '#E1E6DD',
 };
 
-const ADMIN_EMAIL = 'adminmvp@email.com';
-
 const FOREST_IMAGE = {
   uri: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1200&q=90',
 };
@@ -213,45 +211,6 @@ export default function HomeScreen() {
 
       setErroLogin(
         mensagens[code] ?? 'Ocorreu um erro inesperado. Tente novamente.',
-      );
-    } finally {
-      setEntrando(false);
-    }
-  }
-
-  async function acessarAdmin() {
-    const emailDigitado = email.trim().toLowerCase();
-
-    if (emailDigitado !== ADMIN_EMAIL) {
-      Alert.alert(
-        'Acesso restrito',
-        'Esta área é exclusiva do administrador. Confira o e-mail informado.',
-      );
-      return;
-    }
-
-    if (!senha) {
-      Alert.alert(
-        'Autenticação necessária',
-        'Digite a senha administrativa no campo de senha.',
-      );
-      senhaRef.current?.focus();
-      return;
-    }
-
-    if (entrando) return;
-
-    setEntrando(true);
-    setErroLogin(null);
-
-    try {
-      await login(email.trim(), senha);
-      Keyboard.dismiss();
-      router.replace('/admin' as never);
-    } catch {
-      Alert.alert(
-        'Acesso negado',
-        'Não foi possível autenticar. Confira o e-mail e a senha administrativos.',
       );
     } finally {
       setEntrando(false);
@@ -637,30 +596,6 @@ export default function HomeScreen() {
                 </Pressable>
 
                 <Pressable
-                  style={[
-                    styles.adminLoginButton,
-                    entrando && styles.buttonDisabled,
-                  ]}
-                  onPress={acessarAdmin}
-                  disabled={entrando}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.adminLoginIcon}>♙</Text>
-
-                  <View style={styles.adminLoginContent}>
-                    <Text style={styles.adminLoginTitle}>
-                      Área administrativa
-                    </Text>
-
-                    <Text style={styles.adminLoginSubtitle}>
-                      Acesso exclusivo ao administrador
-                    </Text>
-                  </View>
-
-                  <Text style={styles.adminLoginArrow}>↗</Text>
-                </Pressable>
-
-                <Pressable
                   style={styles.registerButton}
                   onPress={() => router.push('/cadastro')}
                   accessibilityRole="button"
@@ -955,41 +890,6 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.6,
-  },
-  adminLoginButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.green,
-    borderRadius: 15,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginTop: 12,
-    borderWidth: 1,
-    borderColor: '#31563A',
-  },
-  adminLoginIcon: {
-    color: COLORS.lime,
-    fontSize: 25,
-    marginRight: 13,
-  },
-  adminLoginContent: {
-    flex: 1,
-  },
-  adminLoginTitle: {
-    color: COLORS.white,
-    fontSize: 14,
-    fontWeight: '900',
-  },
-  adminLoginSubtitle: {
-    color: '#D6E2D5',
-    fontSize: 11,
-    marginTop: 4,
-  },
-  adminLoginArrow: {
-    color: COLORS.lime,
-    fontSize: 22,
-    fontWeight: '800',
-    marginLeft: 8,
   },
   registerButton: {
     paddingVertical: 23,

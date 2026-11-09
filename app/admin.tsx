@@ -15,8 +15,6 @@ import {
 
 import { useAuth } from '@/contexts/AuthContext';
 
-const ADMIN_EMAIL = 'adminmvp@email.com';
-
 const CORES = {
   fundo: '#F8F4F0',
   verdeEscuro: '#1A481F',
@@ -71,13 +69,13 @@ function AreaAdministrativa({
 }
 
 export default function AdminScreen() {
-  const { user } = useAuth();
+  const { user, role, loading } = useAuth();
 
   const [verificando, setVerificando] = useState(true);
   const [autorizado, setAutorizado] = useState(false);
 
   useEffect(() => {
-    if (user === undefined) return;
+    if (loading) return;
 
     if (!user) {
       setAutorizado(false);
@@ -86,7 +84,7 @@ export default function AdminScreen() {
       return;
     }
 
-    if (user.email?.toLowerCase() !== ADMIN_EMAIL) {
+    if (role !== 'admin') {
       setAutorizado(false);
       setVerificando(false);
 
@@ -101,7 +99,7 @@ export default function AdminScreen() {
 
     setAutorizado(true);
     setVerificando(false);
-  }, [user]);
+  }, [user, role, loading]);
 
   if (verificando || !autorizado) {
     return (

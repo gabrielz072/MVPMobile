@@ -35,6 +35,7 @@ export default function PerfilScreen() {
     user,
     userName,
     photoURL,
+    role,
     updateUserProfile,
     logout,
   } = useAuth();
@@ -248,6 +249,36 @@ export default function PerfilScreen() {
               </TouchableOpacity>
             )}
           </View>
+
+          {role === 'admin' && (
+            <TouchableOpacity
+              style={[styles.opcao, styles.adminOpcao]}
+              onPress={() => router.push('/admin')}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+            >
+              <View style={styles.iconeAdmin}>
+                <Ionicons
+                  name="grid-outline"
+                  size={24}
+                  color={VERDE_MEDIO}
+                />
+              </View>
+
+              <View style={styles.textoOpcao}>
+                <Text style={styles.nomeOpcao}>Painel de controle</Text>
+                <Text style={styles.descOpcao}>
+                  Gerencie os conteúdos da área administrativa
+                </Text>
+              </View>
+
+              <Ionicons
+                name="chevron-forward"
+                size={21}
+                color={CINZA}
+              />
+            </TouchableOpacity>
+          )}
 
           {/* ACESSO À CONTA */}
           {!user && (
@@ -651,6 +682,18 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.09,
     shadowRadius: 9,
+  },
+  adminOpcao: {
+    marginTop: 14,
+    marginBottom: 0,
+  },
+  iconeAdmin: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: '#E5EDE2',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatar: {
     width: 57,
