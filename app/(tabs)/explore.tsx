@@ -1,6 +1,8 @@
+
 import { router } from 'expo-router';
 import {
   ImageBackground,
+  Linking,
   Pressable,
   ScrollView,
   StatusBar,
@@ -23,27 +25,79 @@ const categories = [
     title: 'Trilhas',
     subtitle: 'Aventure-se pelas montanhas e descubra novos caminhos.',
     icon: '🥾',
-    image:
-      'https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=1200&q=85',
+    image: require('../../assets/images/trilha-suspensa-ponte.jpg'),
     route: '/trilhas' as const,
   },
   {
     title: 'Natureza',
     subtitle: 'Conheça parques, cachoeiras e paisagens incríveis.',
     icon: '🌿',
-    image:
-      'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1200&q=85',
+    image: require('../../assets/images/dedo-de-deus.jpg'),
     route: '/natureza' as const,
   },
   {
     title: 'Eventos',
     subtitle: 'Descubra o que acontece em Teresópolis.',
     icon: '🎉',
-    image:
-      'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=85',
+    image: {
+      uri: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=85',
+    },
     route: '/eventos' as const,
   },
 ];
+
+const destinos = [
+  {
+    nome: 'Borboletário',
+    descricao:
+      'Um espaço dedicado à observação de borboletas e ao contato com a natureza.',
+    imagem: require('../../assets/images/borboletario.jpg'),
+    mapa: 'Borboletário Teresópolis RJ',
+  },
+  {
+    nome: 'Quiosque das Lendas',
+    descricao:
+      'Um ponto de visitação para conhecer histórias e lendas da região.',
+    imagem: require('../../assets/images/quiosque-das-lendas.jpg'),
+    mapa: 'Quiosque das Lendas Teresópolis RJ',
+  },
+  {
+    nome: 'Lago Comary',
+    descricao:
+      'Um dos cartões-postais da cidade, com vista para as montanhas da Serra dos Órgãos.',
+    imagem: require('../../assets/images/lago-comary.jpg'),
+    mapa: 'Lago Comary Teresópolis RJ',
+  },
+  {
+    nome: 'Serra dos Órgãos',
+    descricao:
+      'Conheça as paisagens, montanhas e atrativos do Parque Nacional da Serra dos Órgãos.',
+    imagem: require('../../assets/images/serra-dos-orgaos.jpg'),
+    mapa: 'Parque Nacional da Serra dos Órgãos sede Teresópolis RJ',
+  },
+  {
+  nome: 'Praça Santa Tereza',
+  descricao:
+    'Um espaço para passear, descansar e aproveitar o ambiente da cidade.',
+  imagem: require('../../assets/images/praça.jpg'),
+  mapa: 'Praça Santa Tereza Teresópolis RJ',
+},
+  {
+    nome: 'Feirinha do Alto',
+    descricao:
+      'Um dos pontos tradicionais de compras, artesanato e gastronomia de Teresópolis.',
+    imagem: require('../../assets/images/feirinha.jpeg'),
+    mapa: 'Feirinha do Alto Praça Higino da Silveira Teresópolis RJ',
+  },
+];
+
+function abrirNoGoogleMaps(local: string) {
+  const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(local)}`;
+
+  Linking.openURL(url).catch((error) => {
+    console.error('Erro ao abrir o Google Maps:', error);
+  });
+}
 
 export default function ExploreScreen() {
   const { width, height } = useWindowDimensions();
@@ -73,6 +127,7 @@ export default function ExploreScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.container}>
+          {/* CABEÇALHO */}
           <View style={styles.heading}>
             <Text style={styles.eyebrow}>
               CIRCUITO TERÊ VERDE
@@ -93,14 +148,13 @@ export default function ExploreScreen() {
             </Text>
           </View>
 
+          {/* DESTAQUE PRINCIPAL */}
           <Pressable
             style={styles.heroCard}
             onPress={() => router.push('/trilhas')}
           >
             <ImageBackground
-              source={{
-                uri: 'https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=1400&q=85',
-              }}
+              source={require('../../assets/images/subsede-vale-da-revolta.jpg')}
               style={[
                 styles.heroImage,
                 { height: heroHeight },
@@ -139,6 +193,7 @@ export default function ExploreScreen() {
             </ImageBackground>
           </Pressable>
 
+          {/* CATEGORIAS */}
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>
               Explore por categoria
@@ -166,7 +221,7 @@ export default function ExploreScreen() {
                 onPress={() => router.push(category.route)}
               >
                 <ImageBackground
-                  source={{ uri: category.image }}
+                  source={category.image}
                   style={[
                     styles.categoryImage,
                     { height: categoryHeight },
@@ -201,6 +256,70 @@ export default function ExploreScreen() {
             ))}
           </View>
 
+          {/* DESTINOS DE TERESÓPOLIS */}
+          <View style={styles.destinationsHeader}>
+            <Text style={styles.sectionTitle}>
+              Lugares para conhecer
+            </Text>
+
+            <Text style={styles.sectionSubtitle}>
+              Descubra alguns dos destinos de Teresópolis.
+            </Text>
+          </View>
+
+          <View
+            style={[
+              styles.destinationsList,
+              isTablet && styles.destinationsListTablet,
+            ]}
+          >
+            {destinos.map((destino) => (
+              <View
+                key={destino.nome}
+                style={[
+                  styles.destinationCard,
+                  isTablet && styles.destinationCardTablet,
+                ]}
+              >
+                {/* FOTO COM LINK PARA O GOOGLE MAPS */}
+                <Pressable
+                  onPress={() => abrirNoGoogleMaps(destino.mapa)}
+                  style={({ pressed }) => [
+                    styles.destinationImageButton,
+                    pressed && styles.cardPressed,
+                  ]}
+                  accessibilityRole="link"
+                  accessibilityLabel={`Abrir ${destino.nome} no Google Maps`}
+                >
+                  <ImageBackground
+                    source={destino.imagem}
+                    style={styles.destinationImage}
+                    imageStyle={styles.destinationImageRadius}
+                  >
+                    <View style={styles.destinationOverlay} />
+
+                    <View style={styles.mapBadge}>
+                      <Text style={styles.mapBadgeText}>
+                        📍 Abrir no Google Maps
+                      </Text>
+                    </View>
+                  </ImageBackground>
+                </Pressable>
+
+                <View style={styles.destinationInfo}>
+                  <Text style={styles.destinationTitle}>
+                    {destino.nome}
+                  </Text>
+
+                  <Text style={styles.destinationDescription}>
+                    {destino.descricao}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+
+          {/* RODAPÉ */}
           <View style={styles.footer}>
             <Text style={styles.footerTitle}>
               TERÊ VERDE 🌿
@@ -460,9 +579,93 @@ const styles = StyleSheet.create({
     maxWidth: 290,
   },
 
+  destinationsHeader: {
+    marginTop: 32,
+    marginBottom: 17,
+  },
+
+  destinationsList: {
+    gap: 17,
+  },
+
+  destinationsListTablet: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+
+  destinationCard: {
+    width: '100%',
+    backgroundColor: COLORS.white,
+    borderRadius: 18,
+    overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#19391D',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.09,
+    shadowRadius: 6,
+  },
+
+  destinationCardTablet: {
+    width: '48.5%',
+  },
+
+  destinationImageButton: {
+    width: '100%',
+  },
+
+  destinationImage: {
+    height: 175,
+    backgroundColor: COLORS.darkGreen,
+    justifyContent: 'flex-end',
+  },
+
+  destinationImageRadius: {
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+  },
+
+  destinationOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(12, 30, 15, 0.08)',
+  },
+
+  mapBadge: {
+    position: 'absolute',
+    right: 12,
+    bottom: 12,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 20,
+  },
+
+  mapBadgeText: {
+    color: COLORS.darkGreen,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+
+  destinationInfo: {
+    padding: 15,
+    gap: 6,
+  },
+
+  destinationTitle: {
+    color: COLORS.darkGreen,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+
+  destinationDescription: {
+    color: COLORS.muted,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+
   footer: {
     alignItems: 'center',
-    paddingTop: 28,
+    paddingTop: 32,
     paddingBottom: 8,
   },
 

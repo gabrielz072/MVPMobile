@@ -1,3 +1,4 @@
+
 import { router } from 'expo-router';
 import MenuInferior from '@/components/MenuInferior';
 import {
@@ -33,16 +34,16 @@ const COLORS = {
   border: '#E6E5DC',
 };
 
+const IMAGENS_TRILHAS: Record<string, number> = {
+  'trilha-suspensa-ponte': require('../assets/images/trilha-suspensa-ponte.jpg'),
+  'trilha-cartao-postal': require('../assets/images/trilha-cartao-postal.jpg'),
+};
+
 function abrirTrilha(id: string) {
-  if (id === '1') {
-    router.push('/pedra-do-sino');
-  } else if (id === '2') {
-    router.push('/escalavrado');
-  } else if (id === '3') {
-    router.push('/pedra-do-acu');
-  } else {
-    router.push({ pathname: '/trilha', params: { id } });
-  }
+  router.push({
+    pathname: '/trilha',
+    params: { id },
+  });
 }
 
 type TrailCardProps = {
@@ -61,7 +62,10 @@ function TrailCard({
   return (
     <View style={styles.trailCard}>
       <ImageBackground
-        source={trail.imagem ? { uri: trail.imagem } : undefined}
+        source={
+          IMAGENS_TRILHAS[trail.id] ??
+          (trail.imagem ? { uri: trail.imagem } : undefined)
+        }
         style={styles.trailImage}
         imageStyle={styles.trailImageRadius}
         resizeMode="cover"
@@ -131,6 +135,7 @@ export default function TrilhasScreen() {
       collection(db, 'trails'),
       (snapshot) => {
         const excluidas: string[] = [];
+
         const salvas = snapshot.docs.flatMap((item) => {
           const data = item.data();
 
@@ -149,10 +154,13 @@ export default function TrilhasScreen() {
           };
         });
 
-        setTrilhas(combinarTrilhas(salvas, excluidas, TRILHAS_PUBLICAS));
+        setTrilhas(
+          combinarTrilhas(salvas, excluidas, TRILHAS_PUBLICAS),
+        );
       },
       (error) => {
         console.error('Erro ao carregar trilhas:', error);
+
         Alert.alert(
           'Erro ao carregar trilhas',
           'Não foi possível atualizar as trilhas. Verifique sua conexão e tente novamente.',
@@ -316,7 +324,8 @@ export default function TrilhasScreen() {
           CIRCUITO TERÊ VERDE · CONECTE-SE À NATUREZA
         </Text>
       </ScrollView>
-       <MenuInferior />
+
+      <MenuInferior />
     </View>
   );
 }

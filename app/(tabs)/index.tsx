@@ -1,3 +1,4 @@
+
 import { router } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import {
@@ -5,6 +6,7 @@ import {
   Animated,
   Dimensions,
   ImageBackground,
+  ImageSourcePropType,
   Keyboard,
   KeyboardAvoidingView,
   PanResponder,
@@ -18,6 +20,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
+import ClimaCard from '../../components/ClimaCard';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } =
   Dimensions.get('window');
@@ -32,9 +35,40 @@ const COLORS = {
   border: '#E1E6DD',
 };
 
-const FOREST_IMAGE = {
-  uri: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1200&q=90',
+// Todas as imagens são carregadas diretamente dos arquivos locais.
+const FOREST_IMAGE = require('../../assets/images/dedo-de-deus.jpg');
+
+const IMAGE_TRES_PICOS = require('../../assets/images/tres-picos.jpg');
+const IMAGE_SOBERBO = require('../../assets/images/soberbo.jpg');
+const IMAGE_FEIRINHA = require('../../assets/images/feirinha.jpeg');
+
+type Slide = {
+  title: string;
+  subtitle: string;
+  image: ImageSourcePropType;
+  route: '/trilhas' | '/natureza' | '/eventos';
 };
+
+const SLIDES: Slide[] = [
+  {
+    title: 'Explore novas trilhas',
+    subtitle: 'Descubra caminhos incríveis na Serra dos Órgãos.',
+    image: IMAGE_TRES_PICOS,
+    route: '/trilhas',
+  },
+  {
+    title: 'Descubra a natureza',
+    subtitle: 'Montanhas, paisagens e lugares inesquecíveis.',
+    image: IMAGE_SOBERBO,
+    route: '/natureza',
+  },
+  {
+    title: 'Viva Teresópolis',
+    subtitle: 'Conheça eventos e experiências da região.',
+    image: IMAGE_FEIRINHA,
+    route: '/eventos',
+  },
+];
 
 const MAX_DRAG = SCREEN_HEIGHT;
 
@@ -81,7 +115,6 @@ export default function HomeScreen() {
     });
   }, [progress]);
 
-  // Gesto da apresentação: deslizar para cima abre o login.
   const introPanResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
@@ -131,7 +164,6 @@ export default function HomeScreen() {
     }),
   ).current;
 
-  // Gesto no cabeçalho do login: deslizar para baixo retorna à apresentação.
   const loginPanResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
@@ -240,30 +272,6 @@ export default function HomeScreen() {
   });
 
   if (user) {
-    const slides = [
-      {
-        title: 'Explore novas trilhas',
-        subtitle: 'Descubra caminhos incríveis na Serra dos Órgãos.',
-        image:
-          'https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=1200&q=85',
-        route: '/trilhas',
-      },
-      {
-        title: 'Descubra a natureza',
-        subtitle: 'Montanhas, paisagens e lugares inesquecíveis.',
-        image:
-          'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=85',
-        route: '/natureza',
-      },
-      {
-        title: 'Viva Teresópolis',
-        subtitle: 'Conheça eventos e experiências da região.',
-        image:
-          'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=1200&q=85',
-        route: '/eventos',
-      },
-    ];
-
     const cardWidth = SCREEN_WIDTH - 50;
     const slideInterval = cardWidth + 14;
 
@@ -320,20 +328,20 @@ export default function HomeScreen() {
               );
 
               setActiveSlide(
-                Math.max(0, Math.min(slides.length - 1, index)),
+                Math.max(0, Math.min(SLIDES.length - 1, index)),
               );
             }}
           >
-            {slides.map((slide, index) => (
+            {SLIDES.map((slide, index) => (
               <Pressable
                 key={slide.title}
-                onPress={() => router.push(slide.route as never)}
+                onPress={() => router.push(slide.route)}
                 accessibilityRole="button"
                 accessibilityLabel={slide.title}
                 style={[styles.carouselCard, { width: cardWidth }]}
               >
                 <ImageBackground
-                  source={{ uri: slide.image }}
+                  source={slide.image}
                   style={styles.carouselImage}
                   imageStyle={styles.carouselImageRadius}
                   resizeMode="cover"
@@ -373,7 +381,7 @@ export default function HomeScreen() {
           </ScrollView>
 
           <View style={styles.pagination}>
-            {slides.map((slide, index) => (
+            {SLIDES.map((slide, index) => (
               <View
                 key={slide.title}
                 style={[
@@ -382,6 +390,11 @@ export default function HomeScreen() {
                 ]}
               />
             ))}
+          </View>
+
+          {/* API de clima: abaixo do carrossel e antes da mensagem final */}
+          <View style={styles.climaContainer}>
+            <ClimaCard />
           </View>
 
           <View style={styles.homeTip}>
@@ -630,19 +643,19 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: {
-  flex: 1,
-  backgroundColor: '#1A481F',
-  overflow: 'hidden',
-},
+    flex: 1,
+    backgroundColor: '#1A481F',
+    overflow: 'hidden',
+  },
   fullScreen: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 1,
   },
   backgroundImage: {
-  flex: 1,
-  width: '100%',
-  height: '100%',
-},
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
   imageOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(5, 20, 10, 0.48)',
@@ -1071,6 +1084,11 @@ const styles = StyleSheet.create({
     width: 22,
     backgroundColor: COLORS.green,
   },
+  climaContainer: {
+    marginHorizontal: -20,
+    marginTop: 20,
+    marginBottom: 8,
+  },
   homeTip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1097,40 +1115,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 16,
     marginTop: 4,
-  },
-  authenticatedEyebrow: {
-    color: '#64814F',
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1.5,
-    marginBottom: 12,
-  },
-  authenticatedTitle: {
-    color: COLORS.green,
-    fontSize: 33,
-    lineHeight: 40,
-    fontWeight: '900',
-  },
-  authenticatedDescription: {
-    color: COLORS.muted,
-    fontSize: 15,
-    lineHeight: 23,
-    marginTop: 14,
-    marginBottom: 25,
-  },
-  secondaryButton: {
-    minHeight: 52,
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 12,
-  },
-  secondaryButtonText: {
-    color: COLORS.green,
-    fontSize: 14,
-    fontWeight: '800',
   },
 });

@@ -1,3 +1,4 @@
+
 import BotaoFavorito from '@/components/BotaoFavorito';
 import {
   CONTEUDO_NATUREZA_PADRAO,
@@ -20,6 +21,14 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+
+// Imagens locais da pasta assets/images
+const IMAGENS_NATUREZA = {
+  dedoDeDeus: require('../../assets/images/dedo-de-deus.jpg'),
+  soberbo: require('../../assets/images/soberbo.jpg'),
+  tresPicos: require('../../assets/images/tres-picos.jpg'),
+  cachoeiraDosFrades: require('../../assets/images/cachoeira-dos-frades.jpg'),
+};
 
 const COLORS = {
   background: '#f8f4f0',
@@ -54,6 +63,7 @@ export default function NaturezaScreen() {
         }
 
         const dados = snapshot.data() as Partial<ConteudoNatureza>;
+
         setConteudo({
           ...CONTEUDO_NATUREZA_PADRAO,
           ...dados,
@@ -64,6 +74,7 @@ export default function NaturezaScreen() {
       },
       (error) => {
         console.error('Erro ao carregar a página Natureza:', error);
+
         Alert.alert(
           'Erro ao carregar Natureza',
           'Não foi possível atualizar o conteúdo. Verifique sua conexão e tente novamente.',
@@ -136,13 +147,10 @@ export default function NaturezaScreen() {
             </Text>
           </View>
 
+          {/* Imagem principal: Dedo de Deus */}
           <View style={styles.heroCard}>
             <ImageBackground
-              source={
-                conteudo.heroImage
-                  ? { uri: conteudo.heroImage }
-                  : undefined
-              }
+              source={IMAGENS_NATUREZA.dedoDeDeus}
               style={[
                 styles.heroImage,
                 { height: heroHeight },
@@ -178,6 +186,7 @@ export default function NaturezaScreen() {
                   <Text style={styles.heroButtonText}>
                     Explorar trilhas
                   </Text>
+
                   <Text style={styles.heroArrow}>→</Text>
                 </Pressable>
               </View>
@@ -197,12 +206,9 @@ export default function NaturezaScreen() {
           {conteudo.contentBlocks.map((bloco) =>
             bloco.tipo === 'imagem' ? (
               <View key={bloco.id} style={styles.imageCard}>
+                {/* Imagem local: Três Picos */}
                 <ImageBackground
-                  source={
-                    bloco.imagem
-                      ? { uri: bloco.imagem }
-                      : undefined
-                  }
+                  source={IMAGENS_NATUREZA.tresPicos}
                   style={[
                     styles.secondaryImage,
                     { height: secondaryHeight },
@@ -210,10 +216,12 @@ export default function NaturezaScreen() {
                   imageStyle={styles.secondaryImageRadius}
                 >
                   <View style={styles.secondaryOverlay} />
+
                   <View style={styles.secondaryImageContent}>
                     <Text style={styles.secondaryImageTag}>
                       SERRA DOS ÓRGÃOS
                     </Text>
+
                     <Text
                       style={[
                         styles.secondaryImageTitle,
@@ -228,9 +236,11 @@ export default function NaturezaScreen() {
             ) : bloco.id === 'conservacao' ? (
               <View key={bloco.id} style={styles.conservationCard}>
                 <Text style={styles.conservationIcon}>🍃</Text>
+
                 <Text style={styles.conservationTitle}>
                   {bloco.titulo}
                 </Text>
+
                 <Text style={styles.conservationText}>
                   {bloco.conteudo}
                 </Text>
@@ -241,19 +251,25 @@ export default function NaturezaScreen() {
                   <View style={styles.cardIcon}>
                     <Text style={styles.cardEmoji}>🌿</Text>
                   </View>
+
                   <View style={styles.cardHeadingText}>
-                    <Text style={styles.cardTitle}>{bloco.titulo}</Text>
+                    <Text style={styles.cardTitle}>
+                      {bloco.titulo}
+                    </Text>
+
                     {bloco.id === 'mata-atlantica' && (
                       <Text style={styles.cardKicker}>
                         FLORESTAS E VIDA SILVESTRE
                       </Text>
                     )}
+
                     {bloco.id === 'montanhismo' && (
                       <Text style={styles.cardKicker}>
                         AVENTURA E EXPLORAÇÃO
                       </Text>
                     )}
                   </View>
+
                   {bloco.id !== 'conservacao' && (
                     <BotaoFavorito
                       salvo={favoritos.natureza.includes(bloco.id)}
@@ -262,7 +278,11 @@ export default function NaturezaScreen() {
                     />
                   )}
                 </View>
-                <Text style={styles.cardText}>{bloco.conteudo}</Text>
+
+                <Text style={styles.cardText}>
+                  {bloco.conteudo}
+                </Text>
+
                 {bloco.id === 'montanhismo' && (
                   <Pressable
                     style={styles.detailsButton}
@@ -271,6 +291,7 @@ export default function NaturezaScreen() {
                     <Text style={styles.detailsButtonText}>
                       Conhecer as trilhas
                     </Text>
+
                     <Text style={styles.detailsArrow}>↗</Text>
                   </Pressable>
                 )}

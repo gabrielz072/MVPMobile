@@ -1,3 +1,4 @@
+
 import { UserAccountBar } from '@/components/UserAccountBar';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -17,13 +18,24 @@ import { db } from '@/lib/firebase';
 import type { Trilha } from '@/lib/trilhas';
 import { trilhas } from './data/trilhas';
 
+const IMAGENS_TRILHAS: Record<string, number> = {
+  'trilha-suspensa-ponte': require('../assets/images/trilha-suspensa-ponte.jpg'),
+  'trilha-cartao-postal': require('../assets/images/trilha-cartao-postal.jpg'),
+};
+
 export default function TrilhaScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const trilhaId = id;
+
   const [trilha, setTrilha] = useState<Trilha | null>(null);
   const [carregando, setCarregando] = useState(true);
-  const { favoritos, alternarFavorito, usuarioLogado, estaAtualizando } =
-    useFavoritos();
+
+  const {
+    favoritos,
+    alternarFavorito,
+    usuarioLogado,
+    estaAtualizando,
+  } = useFavoritos();
 
   useEffect(() => {
     if (!trilhaId) {
@@ -39,6 +51,7 @@ export default function TrilhaScreen() {
       (snapshot) => {
         if (snapshot.exists()) {
           const dados = snapshot.data();
+
           setTrilha(
             dados.excluido === true
               ? null
@@ -52,15 +65,22 @@ export default function TrilhaScreen() {
                 },
           );
         } else {
-          setTrilha(trilhas.find((item) => item.id === trilhaId) ?? null);
+          setTrilha(
+            trilhas.find((item) => item.id === trilhaId) ?? null,
+          );
         }
 
         setCarregando(false);
       },
       (error) => {
         console.error('Erro ao carregar trilha:', error);
-        setTrilha(trilhas.find((item) => item.id === trilhaId) ?? null);
+
+        setTrilha(
+          trilhas.find((item) => item.id === trilhaId) ?? null,
+        );
+
         setCarregando(false);
+
         Alert.alert(
           'Erro ao carregar trilha',
           'Não foi possível atualizar as informações. Verifique sua conexão e tente novamente.',
@@ -78,9 +98,13 @@ export default function TrilhaScreen() {
         'Faça login para salvar suas trilhas favoritas.',
         [
           { text: 'Agora não', style: 'cancel' },
-          { text: 'Entrar', onPress: () => router.push('/login') },
+          {
+            text: 'Entrar',
+            onPress: () => router.push('/login'),
+          },
         ],
       );
+
       return;
     }
 
@@ -99,38 +123,63 @@ export default function TrilhaScreen() {
     return (
       <View style={styles.container}>
         <UserAccountBar />
+
         <Text style={styles.title}>
           Trilha não encontrada
         </Text>
+
+        <Pressable
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.backText}>
+            ← Voltar
+          </Text>
+        </Pressable>
       </View>
     );
   }
 
-return (
-  <ScrollView style={styles.container}>
+  const imagemLocal = IMAGENS_TRILHAS[trilha.id];
 
-    <UserAccountBar />
-
-    <Pressable
-      style={styles.backButton}
-      onPress={() => router.back()}
+  return (
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.scrollContent}
     >
-      <Text style={styles.backText}>
-        ← Voltar
+      <UserAccountBar />
+
+      <Pressable
+        style={styles.backButton}
+        onPress={() => router.back()}
+      >
+        <Text style={styles.backText}>
+          ← Voltar
+        </Text>
+      </Pressable>
+
+      {imagemLocal ? (
+        <Image
+          source={imagemLocal}
+          style={styles.image}
+          resizeMode="cover"
+        />
+      ) : trilha.imagem ? (
+        <Image
+          source={{ uri: trilha.imagem }}
+          style={styles.image}
+          resizeMode="cover"
+        />
+      ) : null}
+
+      <Text style={styles.title}>
+        {trilha.nome}
       </Text>
-    </Pressable>
 
-    {trilha.imagem ? (
-      <Image source={{ uri: trilha.imagem }} style={styles.image} />
-    ) : null}
+      <Text style={styles.description}>
+        {trilha.descricao}
+      </Text>
 
-    <Text style={styles.title}>
-      {trilha.nome}
-    </Text>
-
-    <Text style={styles.description}>
-      {trilha.descricao}
-    </Text>
       <Pressable
         style={styles.favoriteButton}
         onPress={handleFavorito}
@@ -143,32 +192,29 @@ return (
         </Text>
       </Pressable>
 
-    <View style={styles.infoContainer}>
+      <View style={styles.infoContainer}>
+        <View style={styles.info}>
+          <Text style={styles.label}>
+            Dificuldade
+          </Text>
 
-      <View style={styles.info}>
-        <Text style={styles.label}>
-          Dificuldade
-        </Text>
+          <Text style={styles.value}>
+            {trilha.dificuldade}
+          </Text>
+        </View>
 
-        <Text style={styles.value}>
-          {trilha.dificuldade}
-        </Text>
+        <View style={styles.info}>
+          <Text style={styles.label}>
+            Duração
+          </Text>
+
+          <Text style={styles.value}>
+            {trilha.duracao}
+          </Text>
+        </View>
       </View>
-
-      <View style={styles.info}>
-        <Text style={styles.label}>
-          Duração
-        </Text>
-
-        <Text style={styles.value}>
-          {trilha.duracao}
-        </Text>
-      </View>
-
-    </View>
-
-  </ScrollView>
-);
+    </ScrollView>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -177,6 +223,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 24,
   },
+
+  scrollContent: {
+    paddingBottom: 40,
+  },
+
   centralizado: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -192,6 +243,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'gray',
     marginBottom: 30,
+    lineHeight: 24,
   },
 
   label: {
@@ -206,43 +258,42 @@ const styles = StyleSheet.create({
   },
 
   image: {
-  width: '100%',
-  height: 220,
-  borderRadius: 16,
-  marginBottom: 20,
-},
+    width: '100%',
+    height: 220,
+    borderRadius: 16,
+    marginBottom: 20,
+  },
 
-backButton: {
-  marginBottom: 16,
-},
+  backButton: {
+    marginBottom: 16,
+  },
 
-backText: {
-  fontSize: 17,
-  fontWeight: 'bold',
-},
+  backText: {
+    fontSize: 17,
+    fontWeight: 'bold',
+  },
 
-infoContainer: {
-  marginTop: 10,
-},
+  infoContainer: {
+    marginTop: 10,
+  },
 
-info: {
-  backgroundColor: '#E8F5E9',
-  padding: 16,
-  borderRadius: 12,
-  marginBottom: 12,
-},
+  info: {
+    backgroundColor: '#E8F5E9',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
 
-favoriteButton: {
-  backgroundColor: '#E8F5E9',
-  padding: 16,
-  borderRadius: 12,
-  marginBottom: 24,
-  alignItems: 'center',
-},
+  favoriteButton: {
+    backgroundColor: '#E8F5E9',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 24,
+    alignItems: 'center',
+  },
 
-favoriteText: {
-  fontSize: 17,
-  fontWeight: 'bold',
-},
-
+  favoriteText: {
+    fontSize: 17,
+    fontWeight: 'bold',
+  },
 });
