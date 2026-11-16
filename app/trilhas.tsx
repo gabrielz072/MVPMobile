@@ -39,6 +39,17 @@ const IMAGENS_TRILHAS: Record<string, number> = {
   'trilha-cartao-postal': require('../assets/images/trilha-cartao-postal.jpg'),
 };
 
+function obterImagemTrilha(trail: Trilha) {
+  if (trail.nome.toLowerCase().includes('pedra do sino')) {
+    return require('../assets/images/pedra-do-sino.jpg');
+  }
+
+  return (
+    IMAGENS_TRILHAS[trail.id] ??
+    (trail.imagem ? { uri: trail.imagem } : undefined)
+  );
+}
+
 function abrirTrilha(id: string) {
   router.push({
     pathname: '/trilha',
@@ -62,10 +73,7 @@ function TrailCard({
   return (
     <View style={styles.trailCard}>
       <ImageBackground
-        source={
-          IMAGENS_TRILHAS[trail.id] ??
-          (trail.imagem ? { uri: trail.imagem } : undefined)
-        }
+        source={obterImagemTrilha(trail)}
         style={styles.trailImage}
         imageStyle={styles.trailImageRadius}
         resizeMode="cover"

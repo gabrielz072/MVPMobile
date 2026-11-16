@@ -23,6 +23,17 @@ const IMAGENS_TRILHAS: Record<string, number> = {
   'trilha-cartao-postal': require('../assets/images/trilha-cartao-postal.jpg'),
 };
 
+function obterImagemTrilha(trilha: Trilha) {
+  if (trilha.nome.toLowerCase().includes('pedra do sino')) {
+    return require('../assets/images/pedra-do-sino.jpg');
+  }
+
+  return (
+    IMAGENS_TRILHAS[trilha.id] ??
+    (trilha.imagem ? { uri: trilha.imagem } : undefined)
+  );
+}
+
 export default function TrilhaScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const trilhaId = id;
@@ -140,7 +151,7 @@ export default function TrilhaScreen() {
     );
   }
 
-  const imagemLocal = IMAGENS_TRILHAS[trilha.id];
+  const imagemLocal = obterImagemTrilha(trilha);
 
   return (
     <ScrollView
@@ -161,12 +172,6 @@ export default function TrilhaScreen() {
       {imagemLocal ? (
         <Image
           source={imagemLocal}
-          style={styles.image}
-          resizeMode="cover"
-        />
-      ) : trilha.imagem ? (
-        <Image
-          source={{ uri: trilha.imagem }}
           style={styles.image}
           resizeMode="cover"
         />

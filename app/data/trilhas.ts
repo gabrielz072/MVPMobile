@@ -18,4 +18,13 @@ export const trilhas = [
     duracao: 'Aproximadamente 2 horas (ida e volta)',
     imagem: '',
   },
+  {
+    id: 'pedra-do-sino',
+    nome: 'Trilha da Pedra do Sino',
+    descricao:
+      'Uma das trilhas mais tradicionais do montanhismo brasileiro, localizada no Parque Nacional da Serra dos Órgãos. O percurso parte da sede Teresópolis, atravessa trechos de Mata Atlântica, passa por cachoeiras e áreas de montanha até alcançar o cume da Pedra do Sino, a 2.275 metros de altitude. Do alto, é possível contemplar uma vista panorâmica da Serra dos Órgãos, da Baía de Guanabara e do Vale do Paraíba. A caminhada possui aproximadamente 11 km de subida e exige bom preparo físico.',
+    dificuldade: 'Moderada a pesada',
+    duracao: 'Aproximadamente 5 a 6 horas (ida)',
+    imagem: '',
+  },
 ];
